@@ -1,5 +1,6 @@
 # mac file
 .DS_Store
+*.icloud
 
 # LaTeX temporary files
 *.aux
