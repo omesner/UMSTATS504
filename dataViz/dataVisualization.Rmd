@@ -1,0 +1,118 @@
+---
+title: "dataVisualization"
+author: "Octavio Mesner"
+date: "12/4/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+use_python("/usr/bin/python")
+```
+
+## Data Visualization
+
+- Visualizations can make understanding easier and faster (with a description)
+- R and python make it very easy to generate some graphics
+  - plots associated with models (glmnet, survival, twang)
+ - often these off-the-shelf graphics will not be publication ready
+  
+  ```{r makedata, echo=FALSE}
+### Generating data
+sample_size <- 50 # remember DRY
+set.seed(1234)
+num_active_vars <- 10
+num_null_vars <- 20
+true_beta <- 2*runif(num_active_vars) # randomly choosing true beta
+active_x <- matrix(rnorm(sample_size*num_active_vars), nrow=sample_size)
+null_x <- apply(matrix(3*rnorm(sample_size*num_null_vars), nrow=sample_size), 2,
+                function(x) x + 10*runif(1))
+y <- active_x %*% true_beta + rnorm(sample_size)
+dat <- data.frame(cbind(active_x, null_x, y))
+names(dat)[31] <- 'Y' # renaming response variable
+```
+
+```{r glmnet}
+# install.packages("glmnet", repos = "http://cran.us.r-project.org") # only need 1st time
+library(glmnet)
+design_mat <- cbind(active_x, null_x) # glmnet only takes matrices, not dataframes
+l2_fit <- glmnet(design_mat, y, family="gaussian", alpha=0) # alpha = 0 gives Ridge regression
+plot(l2_fit, xvar='lambda', label=TRUE)
+```
+  
+  ```{r km_curve}
+library(survival)
+library(ggfortify)
+
+dat <- read.csv(url('https://raw.githubusercontent.com/propublica/compas-analysis/master/cox-parsed.csv'))
+dat2 <- dat[dat$end > dat$start,]
+dat3 <- dat2[!duplicated(dat2$id),]
+ph <- dat3[!is.na(dat3$decile_score),]
+ph$t_atrisk <- ph$end - ph$start
+
+survobj <- with(ph, Surv(t_atrisk, event))
+fit0 <- survfit(survobj~1, data=ph)
+
+plot(fit0, xlab="Time at risk of recidivism in Days", 
+   ylab="% not rearrested", yscale=100,
+   main ="Survival Distribution (Overall)") 
+
+fitr <- survfit(survobj~race, data=ph)
+plot(fitr, xlab="Time at risk of recidivism in Days", 
+   ylab="% not rearrested", yscale=100,
+   main="Survival Distribution by race",
+   col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple')) 
+legend('bottomleft', legend=levels(as.factor(ph$race)), col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple'), lty=1)
+```
+  
+*Software packages*
+
+- R
+  - Base R is very flexible and customizable, can take a lot of code for publication ready graphics
+  - ggplot can make very nice plots with few lines of code
+
+```{r digamma}
+# digamma plot
+x <- seq(0.1, 30, by=0.0001)
+ydig <- digamma(x)
+
+plot(0,0, type='n', xlim=c(0,25), ylim=c(-2,3.5), xlab="x", ylab="y")
+vlines = seq(0,25, by=2.5)
+abline(v=vlines, col='lightgray')
+hlines = seq(-2,10, by=1)
+abline(h=hlines, col='lightgray')
+lines(x,ydig, type='l', xlab="x", ylab="y")
+
+dat <- data.frame(x,ydig)
+ggplot(dat, aes(x,ydig)) + geom_line() + ylab('y')
+```
+  
+- Python
+  - Matplotlib is also flexible and customizable, but can take a lot of code
+  - Seaborn might be closer to ggplot
+  - Couldn't get python working in Rmarkdown...
+  - [histgrams in seaborn](https://seaborn.pydata.org/tutorial/distributions.html)
+  - [histograms in matplotlib](https://seaborn.pydata.org/tutorial/distributions.html)
+  
+- Latex
+  - tikz (I think) makes the most professional-looking graphics but can be a time sink
+  - there are many libraries of code for tikz
+  - [tikz statsitics examples](https://texample.net/tikz/examples/area/statistics/)
+  
+*General Advice*
+
+- Graphics and time
+  - Most graphics improve with time spend working on them
+  - lower quality graphics can be fast
+  - it's easy to get tunnel vision and spend far too much time on perfect graphics
+  - it's ok to barrow as long as you give credit (pay attention to copyright for publications)
+- Level of detail
+  - too much or too little can both be bad
+  - graphics should be used to communicate ideas quickly
+  - will depend on audience
+- Color
+  - Typically want colors that stand out and are easy to distinguish from each other
+  - More lines/curves means more more colors (usually) but harder to distinguish more colors
+  - gray is less noticeable, sometimes you want that
+- Label axes

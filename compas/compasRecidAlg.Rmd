@@ -1,0 +1,374 @@
+---
+title: "COMPAS Recidivism Algorithm Case Study"
+author: "Octavio Mesner"
+date: "9/21/2020"
+output: 
+  html_document:
+    keep_md: true
+header-includes: 
+  - \usepackage{tikz}
+  - \usepackage{pgfplots}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## About me
+
+- Worked as a biostatistician for 5 years in HIV/STI research
+- Did joint PhD in Engineering and Public Policy and in Statistics and Data Science
+- Thesis topic on non-parametric causal discovery
+- First time teaching this class, I would appreciate constructive feedback
+- Course goal: prepare students in this class for master-level consulting
+
+## Consulting Skills Focus
+
+- In real life consulting, the client will frequently understand the data and surrounding research better than the statistician.
+- Question: have many have done statistical consulting in the past?
+- Analysis should center around a well-defined research question that drive the analysis and the data should be able to provide insight on the question of interest.
+- Bias and data analysis: We all have bias.  This can influence data analysis.  A data analyst, we should do our best to objectively present the data.  When necessary to make assumptions, state them explicitly.  
+- Researchers frequently want "positive results."  Usually this means significant p-values.  Variable selection is a simple way to change p-values, p-hacking.  It's common to need to change variables in a model be it should be done a principled way.
+- Analysis should be transparent and reproducible.  [R Markdown](https://rmarkdown.rstudio.com) and [Jupyter Notebook](https://jupyter.org) make this very easy.  This work is done in R Markdown.  At the end of this case study, you will need to include your reproducible analysis along with the memo.
+
+## Case Study Background
+
+- US has more inmates, proportional to population size, than any other country.   While Black Americans make up 13% of the total US population, they account for 40% of incarcerated population in the US.
+![incarceration world map](./Prisoners_world_map_png2.png)
+Image from [Wikipedia](https://en.wikipedia.org/wiki/Incarceration_in_the_United_States#/media/File:Prisoners_world_map_png2.png)
+- In the US justice system, machine learning algorithms are sometimes used to assess a criminal defendant's risk of recidivism (arrest due to committing a future crime) are being used.
+- Correctional Offenders Management Profiling for Alternative Sanctions (COMPAS) is the most widespread of these algorithms.
+- Its goal according to COMPAS creators: assess "not just risk but also nearly two dozen so-called “criminogenic needs” that relate to the major theories of criminality, including “criminal personality,” “social isolation,” “substance abuse” and “residence/stability.” Defendants are ranked low, medium or high risk in each category."
+- In 2014, then U.S. Attorney General Eric Holder warned that the risk scores might be injecting bias into the courts. He called for the U.S. Sentencing Commission to study their use. “Although these measures were crafted with the best of intentions, I am concerned that they inadvertently undermine our efforts to ensure individualized and equal justice,” he said, adding, “they may exacerbate unwarranted and unjust disparities that are already far too common in our criminal justice system and in our society.”
+- The [questionnaire](https://www.documentcloud.org/documents/2702103-Sample-Risk-Assessment-COMPAS-CORE.html) for determining COMPAS does not directly ask for race, but some people question inherent racial bias in the algorithm.
+- The COMPAS algorithm is proprietary and not available.
+- More information in a [2016 ProPublica article](https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing).
+
+
+## Data
+
+- ProPublica requested two years of COMPAS scores from Broward County Sheriff's Office in Florida
+- Discarded all but pre-trial COMPAS score assessments
+- ProPublica matched COMPAS scores with criminal records from Broward County Clerk's Office website
+- COMPAS score screening date and (original) arrest date frequently differed.  If they are too far apart, that may indicate an error.  The `days_b_screening_arrest` variable gives this difference in days.
+- `is_recid` is rearrest at any time.  `two_year_recid` is rearrest within two years.  Here, `-1` indicates a COMPAS record could not be found and should probably be discarded
+- COMPAS generates a general score, `decile_score`, (1, 2,...,10) where 1 indicates a low risk and 10 indicates a high risk of recidivism.  There is also a violence score as well, `v_decile_score`.
+
+```{r}
+dat<-read.csv("./compas-scores.csv")
+dim(dat)
+names(dat)
+#head(dat)
+#summary(dat)
+```
+
+```{r sex}
+table(dat$sex)
+table(dat$sex)/sum(!is.na(dat$sex))*100
+```
+
+```{r age}
+library(ggplot2)
+ggplot(dat, aes(x=age, color=sex, fill=sex)) +
+  geom_histogram(position="dodge")
+```
+
+```{r race}
+ggplot(dat, aes(race)) +
+  geom_bar(fill='blue')
+ggplot(dat, aes(x=race, fill=sex)) +
+  geom_bar(position='dodge')
+```
+
+```{r compas}
+ggplot(dat, aes(decile_score)) +
+  geom_histogram()
+table(!is.na(dat$decile_score))
+```
+
+General recommendations:
+
+- Look at the raw data and different plots of the data before doing any modeling.
+- Look for missing data and for values that might not make sense.
+- Make sure you understand what observations (rows) are included in the data and which of those observations serve your data analysis goals
+- Try to understand what the variables (columns) represent and which ones will serve your data analysis goals
+
+## Quantifying racial bias
+
+- Before doing any analysis, let's look at recidivism, COMPAS, and race
+
+```{r Race and Recidivism}
+df <- dat[dat$is_recid != -1,]
+sum(is.na(df$race))
+sum(is.na(df$is_recid))
+table(df$race, df$is_recid)[,2]/t(table(df$race))*100
+```
+Above is the recidivism rate by race
+
+- COMPAS also gave Black Americans greater scores on average:
+```{r}
+tapply(df$decile_score, df$race, mean)
+```
+Is this the best way to present this information?
+
+## How to model algorithmic bias?
+- What does bias mean here?
+- Would COMPAS give someone a greater score solely due to being Black, without changing anything else?
+- Remember COMPAS doesn't ask for race directly.
+- How could we quantify bias in this case?  Are race and COMPAS still associated after taking recidivism into account?
+- It is tempting to use `decile_score ~ is_recid + race` to quantify the association between COMPAS and race while controlling for recidivism.
+
+## Collider Bias
+
+[Causal comic](https://xkcd.com/552/)
+
+**Scenario 1:**
+```{r chain, echo=FALSE, out.width = '40%'}
+library(DiagrammeR)
+grViz("digraph flowchart {A -> B -> C;}")
+```
+What would a regression model of `C ~ A + B` yield?
+
+```{r}
+set.seed(1234)
+size <- 1000
+A <- 6*rnorm(size)+50
+B <- -2*A - 25 + rnorm(size)
+C <- 5*B + 3 +rnorm(size)
+summary(lm(C~A+B))
+```
+What about this regression model: `C ~ A`?
+```{r}
+summary(lm(C~A))
+```
+
+Does this coefficient and intercept estimate make sense?
+$C = 5B + 3 + \epsilon_B = 5(-2A - 25 + \epsilon_A) = -10A - 122 + 5\epsilon_A + \epsilon_B$
+
+**Scenario 2:**
+```{r fork, echo=FALSE, out.width = '40%'}
+grViz("digraph flowchart {A -> B; A -> C;}")
+```
+
+```{r}
+set.seed(1234)
+size <- 1000
+A <- 6*rnorm(size)+50
+B <- -2*A - 25 + rnorm(size)
+C <- 2*A +5 +rnorm(size)
+summary(lm(C~A+B))
+```
+What about this regression model: `C ~ A`?  Try it!
+
+**Scenario 3:**
+```{r collider, echo=FALSE, out.width = '40%'}
+grViz("digraph flowchart {A -> C; B -> C;}")
+```
+
+```{r}
+set.seed(1234)
+size <- 1000
+A <- 6*rnorm(size)+50
+B <- -2*rnorm(size) - 25 + rnorm(size)
+C <- -4*A + 5*B + 3 +rnorm(size)
+summary(lm(C~A+B))
+```
+
+**Scenario 3 with `A` as the outcome:**
+```{r}
+summary(lm(A~B+C))
+summary(lm(A~B))
+```
+
+- Even though `A` and `B` are independent, they are *conditionally dependent* if controlling for `C`.
+- Why did this happen?  Does it make sense?
+- Consider $A\sim \text{Bernoulli}(0.5), B\sim \text{Bernoulli}(0.5)$ (independent coin flips), and $C = A\cdot B$.  
+- $A$ and $B$ are independent; that is, knowledge of $B$ give no information on the value of $A$. But, additional knowledge of $C$ does give information about the value of $A$.
+
+**Scenario 4**
+```{r shielded collider, echo=FALSE, out.width = '40%'}
+grViz("digraph flowchart {A -> C; B -> C; A -> B}")
+```
+
+```{r}
+set.seed(1234)
+size <- 1000
+A <- 6*rnorm(size)+50
+B <- A - 2*rnorm(size) - 25 + rnorm(size)
+C <- -4*A + 5*B + 3 +rnorm(size)
+summary(lm(C~A+B))
+summary(lm(C~A))
+```
+
+## COMPAS and possible collider bias
+
+COMPAS uses [questionnaire](https://www.documentcloud.org/documents/2702103-Sample-Risk-Assessment-COMPAS-CORE.html) responses (Q in the diagram) to predict recidivism.  
+```{r, echo=FALSE, out.width = '40%'}
+grViz("digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; Race -> Recidivism}")
+```
+
+Because COMPAS is used in sentencing, it may actually impact recidivism as well.
+```{r, echo=FALSE, out.width = '40%'}
+grViz("digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism}")
+```
+
+One way to quantify racial bias in COMPAS would be to isolate the link between race and COMPAS that is not associated with recidivism.  But, it is not clear how to untangle this from potential collider bias.
+```{r, echo=FALSE, out.width = '40%'}
+grViz("digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism; Race-> COMPAS}")
+```
+
+If we used `decile_score ~ is_recid + race` as a model to quantify bias, it seems very likely that there will be collider bias.
+
+```{r compasColliderBias}
+summary(lm(decile_score ~ is_recid + race, data=df))
+```
+
+In the regression above, several race indicator variables are significant.  But, because collider bias is possible here, we *cannot* conclude that COMPAS is racially biased.
+
+## Survival Analysis
+
+- Survival analysis is a set of statistical methods for modeling the time until an event occurs, especially when follow up is not complete for each observation.
+- Example: Testing a new terminal cancer treatment, participants are either given the standard or test treatment.  The goal is to prolong the patient's.  Each patient is followed until death from cancer.  During follow up some participants die from cancer but some drop out while others might die from something else.  Survival analysis allows us to use this data even though we do not have events for each participant.
+
+**Set up**
+
+Assume that $T$ is the time until an event randomly occurs.
+For example, $T$ might be the duration from cancer treatment until remission or death.
+
+
+Let $f(t)$ be a probability density function where $t$ is time, $T\sim f$ be a random variable, and let $F(t)=P(T<t)=\int_0^tf(x)dx$ be its cumulative distribution function.
+Define the survival function as $S(t)=P(T>t)=1-F(t)$ and the hazard function as
+\[
+\lambda(t)=\lim_{h\rightarrow 0} \frac{P(t<T\leq t+h)}{P(T>t)}= \frac{f(t)}{S(t)} = -\frac{d\log S(t)}{dt}.
+\]
+Notice that $f(t)=\lambda(t)S(t)$.
+
+The cumulative hazard function is defined as
+\[
+\Lambda(t)= \int_0^t\lambda(x)dx=-\int_0^td\log S(x)=-\log S(t).
+\]
+So,
+\[
+S(t)=\exp[-\Lambda(t)].
+\]
+Side note: If we model $\lambda(t)=\lambda$ (constant function), then $\Lambda(t)=\lambda t$. So, $f(t)=\lambda\exp(-\lambda t)$ is the exponential distribution.
+
+**Censoring at Random**
+
+With many of time-to-event studies, it is not always possible to wait for an event to occur for each participant before doing the analysis.  In a cancer study, for example, participants may drop out of the study before an event is observed or the study may close before each participant experiences an event.  This is call right censored data.
+While in some cases, a participant does not contribute the entire time until the event occurs, intuitively, we should be able to make use of the time where the event did not occur.
+
+![right censoring image from [here](http://reliawiki.org/index.php/Life_Data_Classification)](./Right_censoring.png)
+
+- Let $f(t;\theta), \lambda(t;\theta)$, and $S(t;\theta)$ be the density, hazard, and survival functions with parameter $\theta$ for the time to the event of interest.
+- We assume that censoring occurs at random (in independently from $f$), say it has cumulative distribution of $G(t;\phi)$ (with some parameter $\phi$) and density function, $g(t;\phi)$.
+- Let $(t_1, \delta_1),\dots, (t_n,\delta_n)$ be a sample of size $n$ where $\delta_i$ indicates censoring and $t_i$ is the time to event or censor.  That is $t_i \sim f(t;\theta)$ when $\delta_i=1$ and $t_i \sim g(t;\phi)$ when $\delta_i=0$.
+- The Likelihood is 
+\[
+\begin{align}
+L(\theta,\phi) &= \prod_{i=1}^n [f(t_i;\theta)[1-G(t_i;\phi)]]^{\delta_i} [g(t_i;\phi)S(t_i;\theta)]^{1-\delta_i}\\
+&=  \prod_{i=1}^n [f(t_i;\theta)]^{\delta_i}[S(t_i;\theta)]^{1-\delta_i} \prod_{i=1}^n [g(t_i;\phi)]^{1-\delta_1}[1-G(t_i;\phi)]^{\delta_i}\\
+&= L(\theta) L(\phi) \propto L(\theta).
+\end{align}
+\]
+
+- Unpacking this a bit, if we observe an event, its density is $f$ and censoring did not occur prior: $[f(t_i;\theta)[1-G(t_i;\phi)]]^{\delta_i}$.  
+If we observe censoring, its density is $g$ and an event did not occur prior: $[g(t_i;\phi)S(t_i;\theta)]^{1-\delta_i}$.
+But, we do not care about the censoring distribution, only the time to event distribution.
+
+- Note that $L(\theta)=\prod_{i=1}^n [f(t_i;\theta)]^{\delta_i}[S(t_i;\theta)]^{1-\delta_i}= \prod_{i=1}^n \lambda(t_i)^{\delta_i} S(t_i)$ is what we actually care about here.
+
+## Kaplan-Meier Estimator
+
+- Consider estimating $S(t) = P(T>t)$ from the sample ordered by $t_i$, $(t_{1}, \delta_{1}), (t_{2}, \delta_{2}), \dots, (t_{n}, \delta_{n})$ and let $t_{(1)}, t_{(2)}, \dots, t_{(J)}$ be the ordered event times, where $\delta_i=1$.
+- Because there are only $J$ points in time where events occur, we approximate $S(t)$ as a decreasing step function.
+- $S(t_{(j)}) = P(T > t_{(j)}) = P(T > t_{(j)} | T > t_{(j-1)}) P(T > t_{(j-1)})$ because for $t > s, P(T>t) = P(T>t, T>s) = P(T>t|T>s)P(T>s)$.
+- For $j = 1,\dots, J$, let $\pi_j = 1-P(T > t_{(j)} | T > t_{(j-1)})$ be the "instantaneous" probability of an event occurring at time $t_j$.
+- Then 
+\[
+S(t_{(j)}) = (1-\pi_j)(1-\pi_{j-1}) \dots (1-\pi_2)(1-\pi_1).
+\]
+- Let $n_j = \#\{t_i \geq t_{(j)}\}$ be the number of participants who are still at risk (who haven't had an event or been censored) at time $t_{(j)}$.  Note that $n_j$ decreases as events occur or as they are censored.
+- Let $d_j = \#\{t_i=t_{(j)}, \delta_i=1\}$ be the number of events that occur at time $t_{(j)}$.
+- We can show that $\pi_j = \frac{d_j}{n_j}$ maximized the non-parametric likelihood.
+- So, we can approximate the survival function as
+\[
+\hat S(t) = \prod_{j=1}^J \left( 1-\frac{d_j}{n_j}\right)^{I(t_{(j)}\leq t)}.
+\]
+- Using the delta-method, we can approxmiate the variance of the estimated survival function as 
+\[
+\hat V[\hat S(t)] = \hat S(t)^2 \sum_{j: t_{(j)}\leq t} \frac{d_j}{n_j(n_j-d_j)}
+\]
+
+This [video](https://www.youtube.com/watch?v=NDgn72ynHcM) clearly illustrates how to calculate the KM survival function.
+
+```{r km_curve}
+library(survival)
+library(ggfortify)
+
+dat <- read.csv(url('https://raw.githubusercontent.com/propublica/compas-analysis/master/cox-parsed.csv'))
+names(dat)
+dim(dat)
+dat2 <- dat[dat$end > dat$start,]
+dim(dat2)
+dat3 <- dat2[!duplicated(dat2$id),]
+dim(dat3)
+ph <- dat3[!is.na(dat3$decile_score),]
+dim(ph)
+ph$t_atrisk <- ph$end - ph$start
+
+survobj <- with(ph, Surv(t_atrisk, event))
+fit0 <- survfit(survobj~1, data=ph)
+summary(fit0)
+plot(fit0, xlab="Time at risk of recidivism in Days", 
+   ylab="% not rearrested", yscale=100,
+   main ="Survival Distribution (Overall)") 
+
+fitr <- survfit(survobj~race, data=ph)
+plot(fitr, xlab="Time at risk of recidivism in Days", 
+   ylab="% not rearrested", yscale=100,
+   main="Survival Distribution by race",
+   col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple')) 
+legend('bottomleft', legend=levels(as.factor(ph$race)), col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple'), lty=1)
+
+survdiff(survobj~race, data=ph)
+```
+
+Note: I haven't used this package in a long time so I needed to look how to use the functions in [documentation](https://cran.r-project.org/web/packages/survival/survival.pdf).  As a consultant, you will probably need to read the documentation a lot.
+
+## Cox proportional hazards model
+
+It is difficult to work with censored data using generalized linear models.
+Assuming that each individual hazard function is proportional to some common baseline hazard function makes the problem workable:
+\[
+\lambda(t|X_i) = \lambda_0(t) \exp(\beta X_i)
+\]
+where $X_i$ is the covariate vector for participant $i$ and $\beta$ is the parameter vector to be estimated.
+
+Assume $Y_i$ is the response variable.
+The likelihood for an observation is
+\[
+L_i(\beta) = \frac{\lambda(Y_i|X_i)}{\sum_{j:Y_j\geq Y_i} \lambda(Y_i|X_j)} = \frac{\lambda_0(Y_i)\exp(\beta X_i)}{\sum_{j:Y_j\geq Y_i} \lambda_0(Y_i) \exp(\beta X_j)} = \frac{\exp(\beta X_i)}{\sum_{j:Y_j\geq Y_i} \exp(\beta X_j)}.
+\]
+Notice that the baseline hazard function, $\lambda_0(t)$, cancels.  So, now we can use use an optimization technique to maximize this function.
+
+The joint likelihood is $L(\beta) = \prod_{i: \delta_i=1} L_i(\beta)$ (over the observations with events occuring), with a log-likelihood of 
+
+\[
+\ell(\beta) = \sum_{i:\delta_i=1}\left(X_i\beta - \log \sum_{j:Y_j\geq Y_i} X_j\beta \right).
+\]
+
+To maximize the likelihood, we can use the Newton-Raphson method.
+
+```{r phmodel}
+summary(coxph(survobj~race, data=ph))
+summary(coxph(survobj~race+decile_score, data=ph))
+summary(coxph(survobj~race+age+decile_score, data=ph))
+```
+
+## High Level Summary
+
+- Tools like Rmarkdown and Jupyter notebook make code more easily understood and reproducible.
+- Always explore the data before running regressions and other statistical tests.  Look at the raw data itself, try to understand variable names, variable distributions, missing data, etc
+- Collider bias occurs when conditioning (including as a covariate) on a variable that is influenced by the outcome variable and at least one other covariate.
+- Survival analysis tools, such as Kaplan-Meier curves and Cox PH regression, are helpful when follow times leading up to an event vary by observation, especially when censoring occurs.
+- When reporting on your analysis, it is important to be aware of possible causal pathways. But, most of the time, it is not possible to use statistical models alone to attribute a causal relationships.

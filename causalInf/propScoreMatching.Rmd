@@ -1,0 +1,619 @@
+---
+title: "Causal Inference"
+author: "Octavio Mesner"
+date: "10/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(twang)
+library(reshape2)
+```
+
+## Association vs Causation
+
+- What is causation?  Why is it important?
+- Causal questions:
+  - Which cancer treatments are best for which patients?
+  - Will a national gun law result in fewer homicides?
+  - Does increasing minimum wage reduce job openings?
+  - Will changing `X` also change `Y`?
+
+## Simpson's paradox
+
+- How can statistics be misleading on causation?
+- New infectious disease with high mortality rate
+- Scientists develop an experimental treatment and give it to doctors to try out
+
+
+```{r simpson paradox, echo=FALSE}
+set.seed(1234)
+size <- 1000
+symptoms <- sample(c(0,1), size, replace = TRUE)
+treatment <- rbinom(size, 1, 0.3 + 0.4*symptoms)
+mortality <- rbinom(size, 1, 0.15 + 0.3*symptoms - 0.1*treatment)
+
+symptoms <- ifelse(symptoms==1, 'severe', 'mild')
+treatment <- ifelse(treatment==1, 'experimental', 'placebo')
+mortality <- ifelse(mortality==1, 'died', 'alive')
+
+df <- data.frame(treatment, symptoms, mortality)[sample(size),]
+head(df, 20)
+table(df$treatment)
+table(df$symptoms)
+table(df$mortality)
+```
+
+- The mortality rate for each group is below:
+```{r mortalityTreatment}
+table(df$treatment, df$mortality)[,2]/table(df$treatment)
+```
+
+- The death rate is higher in the experimental treatment group than the placebo group
+- Taking a closer look, we stratify death rate by symptom severity:
+
+```{r stratified}
+table(df$treatment, df$symptoms, df$mortality)[,,2]/table(df$treatment, df$symptoms)
+```
+
+- Someone with severe symptoms is much more likely to die than someone with mild symptoms
+- But, in both groups, the experimental treatment was associated with fewer deaths
+- How can this happen?
+
+```{r treatment}
+table(df$treatment, df$symptoms)
+chisq.test(df$treatment, df$symptoms)
+```
+
+- Those with severe symptoms were more likely to be on the experimental treatment
+- Timing matters here!  Was severity taken before or after treatment?
+- Neither scenario below is conclusive from the data, but knowing the time ordering can help rule one out
+
+```{dot benefit, out.width = "30%", echo=FALSE}
+digraph G {
+  Severity -> Treatment [ label = "?"];
+  Treatment -> Severity [ label = "?"];
+  Severity -> Mortality
+  Treatment -> Mortality [constraint=false]
+}
+```
+
+
+## Confounding
+
+- Example: Sleeping with shoes on is associated with waking up with a headache
+- Example: Yellow teeth and cancer are confounded by smoking
+- [Confounding](https://en.wikipedia.org/wiki/Confounding): `X` and `Y` are confounded if they are both influenced by a third variable
+- Example from last section: Assume that severity was taken before treatment was given
+
+```{dot benefit2, out.width = "30%", echo=FALSE}
+digraph G {
+  Severity -> Treatment
+  Severity -> Mortality
+  Treatment -> Mortality [constraint=false]
+}
+```
+
+- There are two "open" paths from treatment to mortality:
+  - `treatment <- severity -> mortality`
+  - `treatment -> mortality`
+- Looking at the total association between treatment and mortality (without severity) will use include assocations from both paths
+- Controlling for severity "blocks" the `treatment <- severity -> mortality` pathway
+- We're left with the direct causal path `treatment -> mortality`
+
+### Confounding Simulations
+
+```{dot confounding1, out.width = "30%", echo=FALSE}
+digraph G {
+  C -> X [ label = "2"];
+  C -> Y [ label = "3"]
+}
+```
+
+- Diagram above: `A` and `B` are confounded by `C` and have no direct causal relationship
+- $X = 2C + \epsilon_X \Rightarrow C = 0.5X + 0.5\epsilon_X$, so $Y = 0.5 \cdot 3X + \text{noise}$
+
+```{r confounding1r}
+size <- 500
+C <- 10*runif(size)
+X <- 2*C + rnorm(size)
+Y <- 3*C + rnorm(size)
+
+summary(lm(Y~X))
+summary(lm(Y~X+C))
+```
+
+```{dot confounding2, out.width = "30%", echo=FALSE}
+digraph G {
+  C -> X [ label = "2"];
+  C -> Y [ label = "3"];
+  X -> Y [ label = "5", constraint=false]
+}
+```
+
+- Diagram above: `X` influences `Y` but the effect is confounded by `Z`.  That is, failing to account for `Z` in a regression will lead to an incorrect causal parameter estimate
+- parameter = (counfounding bias) + (causal effect) = 1.5 + 5 = 6.5
+
+```{r confounding2r}
+Y <- 3*C + 5*X + rnorm(size)
+
+summary(lm(Y~X))
+summary(lm(Y~X+C))
+```
+
+- Note: the covariate causal effect math only works here because the simulated data is linear. In the real world, we typically can't assume linearity.  This math doesn't work without if the true data aren't linear.
+- In most real-world datasets, there will always be the possibility of latent confounding
+
+## Sampling Bias
+
+- [Sampling Bias](https://en.wikipedia.org/wiki/Sampling_bias) occurs when sample is collected in such a way that some members of the intended population have a lower or higher sampling probability than others.
+- Sampling bias can lead to incorrect estimates when variables of interest influence sampling
+- Example: In 1936, the American Literary Digest sent out two million surveys to its readers and predicted that Alf Landon would beat incumbent president, Franklin Roosevelt, by a landslide, but the opposite happened.  This was because readers over-represented Republicans.
+- Example: good looking people are jerks (note: this is example is made up but hopefully memorable)
+
+```{r sampleBias}
+size <- 100
+looks <- 10*runif(size)
+nice <- 10*runif(size)
+relationship <- ifelse(rbinom(size, 1, (looks+nice)/20)==1, 'in relationship', 'single')
+df_all <- data.frame(looks, nice, relationship)
+library(ggplot2)
+ggplot(df_all[relationship=='single',], aes(nice, looks)) + geom_point() + 
+  geom_smooth(method = lm, se = FALSE)
+```
+
+```{r noSampBias}
+ggplot(df_all, aes(nice, looks)) + geom_point(aes(color=relationship)) +
+  stat_smooth(method=lm, se=FALSE)
+```
+
+- Sampling bias is an example of collider bias
+- Here we are conditioning on relationship status
+- Even though looks and jerk are independent, conditioning on a collider induces an association
+- Conditioning on a collider "open" an association pathway
+
+```{dot sampleCollider, out.width = "30%", echo=FALSE}
+digraph G {
+  Looks -> Relationship 
+  Nice -> Relationship
+  Relationship -> Sampling
+}
+```
+
+## Graphical Causal Models and D-separation
+
+- Researchers frequently use *directed acyclic graphs* (DAG) to visualize causal relationships between variables in a dataset
+  - directed - all edges in graph have direction (all edges are arrows)
+  - acyclic - arrow directions do not create a loop
+  - DAGs are sometimes called Bayesian networks
+- DAG below
+  - A, B, C, D, E, F, G, H, I represent variables in a dataset
+  - Arrows indicate a direct causal relationship
+  - A is the *parent* of D
+  - D is the *child* of A
+  - B is the *ancestor* of I
+  - I is the *successor* of B
+
+```{dot networkex, out.width = "50%", echo=FALSE}
+digraph G {
+  A -> D
+  A -> E
+  B -> E
+  C -> G
+  D -> H
+  E -> G
+  F -> G
+  F -> I
+  G -> H
+  G -> I
+}
+```
+
+- Here: we are interested in paths between variables
+  - Note: paths can have arrows pointing either direction
+  - One path between D and F is
+  \[D\leftarrow A\rightarrow E \rightarrow G \leftarrow F\]
+  - Another is 
+  \[D \rightarrow H \leftarrow G \rightarrow I \leftarrow F\]
+  - These are of interest if we want to know if D and F are associated or causally linked
+- Somewhat technical assumptions: in general assume arrows between nodes indicate a causal relationship
+- Text on [Probabilistic Graphical Models](https://mitpress.mit.edu/books/probabilistic-graphical-models) for more detail
+  
+**Factorization and conditional independence**
+
+- In causal inference we frequently want to isolate the average causal effect between two variables given some knowledge of the surrounding Bayesian network, i.e. potential confounders or colliders
+- In reality we rarely know the Bayesian structure of a dataset, but these concepts help inform causal inference.
+
+```{dot simplenetwork, out.width = "30%", echo=FALSE}
+digraph G{
+  A -> B
+  B -> D
+  C -> D
+  C -> E
+}
+```
+
+- Joint distribution can factored as
+  \[P(A, B, C, D, E) = P(A) P(B|A) P(C) P(D|B,C) P(E|C)\]
+- DAGs give information about conditional independence relationships among variables
+- This DAG has one path from A to E: $A \rightarrow B \rightarrow D \leftarrow C \rightarrow E$
+- How can we use this DAG to determine statistical associations between variables/nodes?
+- With 3 nodes:
+  - Chain: $A \rightarrow B \rightarrow C$
+  - Other Chain: $A \leftarrow B \leftarrow C$
+  - Fork: $A \leftarrow B \rightarrow C$
+  - Collider: $A \rightarrow B \leftarrow C$
+  
+- Questions:
+  1. Are A and B associated?
+  2. Are A and D associated?
+  3. Are D and E associated?
+  4. Are B and C associated?
+  5. Are A and E associated?
+ 
+ Rule: If a path has no colliders, then yes and we say that the path is open.
+ If there is a collider on the path, then no and we say that the path is blocked
+ 
+- What out conditioning?
+- Questions:
+  6. Are A and D associated given B?
+  7. Are D and E associated given C?
+  8. Are B and C associated given D?
+  9. Are A and C associated given D?
+  10. Are A and E associated given D?
+  11. Are A and E associated given B?
+  12. Are A and E associated given B, D?
+  
+  Rule: Conditioning on a collider opens a path.
+  Conditioning on a non-collider blocks a path
+  
+- Note: A variable/node and be a collider on one path but not on another.
+
+How can we show that if $D \leftarrow C \rightarrow E$ then $D \perp E | C$?
+
+- $D \perp E | C$ if and only if $P(D,E | C) = P(D|C) P(E|C)$
+\[P(D,E|C) = \frac{P(D,E,C)}{P(C)} = \frac{P(C)P(D|C)P(E|C)}{P(C)} = P(D|C)P(E|C)\]
+
+What about $A \rightarrow B \rightarrow C$?
+
+**Markov Assumption**
+
+```{dot markov, out.width = "20%", echo=FALSE}
+digraph G{
+  Study -> Sleep
+  Study -> Score
+  Sleep -> Score
+}
+```
+
+- We are implicitly using the Markov assumption here
+- Specifically, we are assuming different paths won't perfectly cancel out
+  - I want a good score on my test so I continue studying
+  - With the additional studying, I sleep less
+  - With less sleep, my performance isn't as good
+  - With the extra studying, I know the material better
+  - Can my lack of sleep and extra studying perfectly cancel out?
+  - Markov assumption says no
+  
+**Regression with knowledge of causal structure**
+
+```{dot regnetwork, out.width = "30%", echo=FALSE}
+digraph G{
+  A -> M1
+  M1 -> M2
+  M2 -> Y
+  A -> Y
+  C1 -> C2
+  C1 -> C3
+  C2 -> A
+  C3 -> Y
+  A -> D1
+  D1 -> D2
+  Y -> D3
+  D3 -> D2
+}
+```
+
+- We want to isolate the causal effect of A on Y
+- Assume there are no other relevant variable other than what is in the DAG
+- Which variables need to be taken into account and which should be avoided?
+
+```{dot hardexample, out.width = "30%", echo=FALSE}
+digraph G{
+  A -> Y
+  C1 -> A
+  C1 -> Y
+  C2 -> A
+  C3 -> Y
+  C2 -> C1
+  C3 -> C1
+}
+```
+ 
+ 
+## Evaluating Work Training Programs
+
+- Manpower Demonstration Research Corporation was a federally and privately funded program implemented in the mid-1970s to provide work experience for a period of 6-18 months to individuals who faced economic and social problems prior to enrollment
+- Those selected to join the program participated in various types of work such as restaurant and construction
+- Pre-treatment information was collected - earnings, education, age, ethnicity, marital status
+- All observations here are from men
+- See [Dehejia, R.H. and Wahba, S. (1999). Causal Effects in Nonexperimental Studies: Re-Evaluating the Evaluation of Training Programs. Journal of the American Statistical Association 94: 1053-1062](https://www.tandfonline.com/doi/pdf/10.1080/01621459.1999.10473858?casa_token=dsAisSiC-v4AAAAA:Auzr8KHp8-iB9Gy3T5o9hL-usKjKR1rne_TUvZDkHUCcI31OlVk_c0vwikXNTwQVYIKhhgSKqKXRJw)
+
+```{r ses}
+data(lalonde)
+dim(lalonde)
+names(lalonde)
+table(lalonde$treat)
+lalonde$treat <- ifelse(lalonde$treat == 1, TRUE, FALSE)
+
+#age
+tapply(lalonde$age, lalonde$treat, mean)
+t.test(lalonde$age ~ lalonde$treat)
+ggplot(lalonde, aes(x=age, fill=treat)) +  geom_density(alpha=0.25)
+
+#educ
+tapply(lalonde$educ, lalonde$treat, mean)
+t.test(lalonde$educ ~ lalonde$treat)
+ggplot(lalonde, aes(x=educ, fill=treat)) +  geom_density(alpha=0.25)
+
+#black
+table(lalonde$black, lalonde$treat)
+chisq.test(lalonde$black, lalonde$treat)
+ggplot(lalonde, aes(x=black, fill=treat)) +  geom_bar(position = 'dodge')
+
+#hispan
+table(lalonde$hispan, lalonde$treat)
+chisq.test(lalonde$hispan, lalonde$treat)
+ggplot(lalonde, aes(x=hispan, fill=treat)) +  geom_bar(position = 'dodge')
+
+#married
+table(lalonde$married, lalonde$treat)
+chisq.test(lalonde$married, lalonde$treat)
+ggplot(lalonde, aes(x=married, fill=treat)) +  geom_bar(position = 'dodge')
+
+#nodegree
+table(lalonde$nodegree, lalonde$treat)
+chisq.test(lalonde$nodegree, lalonde$treat)
+ggplot(lalonde, aes(x=nodegree, fill=treat)) +  geom_bar(position = 'dodge')
+
+#re74
+tapply(lalonde$re74, lalonde$treat, mean)
+t.test(lalonde$re74 ~ lalonde$treat)
+ggplot(lalonde, aes(x=re74, fill=treat)) +  geom_density(alpha=0.25)
+
+#re75
+tapply(lalonde$re75, lalonde$treat, mean)
+t.test(lalonde$re75 ~ lalonde$treat)
+ggplot(lalonde, aes(x=re75, fill=treat)) +  geom_density(alpha=0.25)
+```
+
+
+## Quantifying Causal Effect with Counterfactuals
+- Let $Y_i^1$ be the outcome under treatment for observation $i$ and let $Y_i^0$ be the outcome without treatment for observation $i$.
+- Example: Does taking vitamin C prevent sickness?  
+  - $Y_i^1 = 1$ if $i$ takes vitamin C and stays healthy
+  - $Y_i^1 = 0$ if $i$ takes vitamin C and gets sick
+   - $Y_i^0 = 1$ if $i$ does not take vitamin C and stays healthy
+  - $Y_i^1 = 0$ if $i$ does not take vitamin C and gets sick
+- The causal effect for observation $i$ is
+\[Y_i^1 - Y_i^0\]
+- Unfortunately, it's not possible to any individual's with and without treatment
+
+```{r counterfactual data, echo=FALSE}
+set.seed(1234)
+A <- c(rep(0,4), rep(1,4))
+Y0 <- rbinom(4, 1, 0.3)
+Y1 <- rbinom(4, 1, 0.7)
+Y <- c(Y0, Y1)
+Y0 <- c(Y0, rep(NA,4))
+Y1 <- c(rep(NA,4), Y1)
+data <-data.frame(A,Y, Y0, Y1)
+data
+```
+
+- In a population, the average causal effect (ATE) is
+\[\text{ATE} = E\left[Y^1 - Y^0\right] = E[Y^1] - E[Y^0]\]
+- Estimated as
+\[\widehat{\text{ATE}} = \frac{1}{n} \sum_{i=1}^n\left(Y_i^1 - Y_i^0\right)\]
+- Is $E(Y^1|A=1)$ different from $E(Y|A=1)$?
+- $Y^1 = Y^{A=1}$ and $Y^0 = Y^{A=0}$ assumes that $A$ is not influenced by any variables, measured or latent
+
+```{dot counterfactual, out.width = "30%", echo=FALSE}
+digraph G {
+  C -> A [color="lightgray"];
+  C -> Y [];
+  A -> Y [ label = "ATE", constraint=false]
+}
+```
+No other variables influence $A$ when we consider $Y^1, Y^0$
+
+- ATE can be interpreted as the average difference in outcome within the population that is attributed to $A$
+- There may be other reasons $Y$ differs from person to person, like age, severity, etc
+- Conditional Average Causal Effect (CATE): if $Z$ is another covariate,
+\[\text{CATE}_z = E[Y^1|Z=z] - E[Y^0|Z=z]\]
+is the average causal effect for group $Z=z$.
+
+## Randomized Controlled Experiments or Trials
+- When does a parameter estimate have a causal interpretation?
+- Vaccine trails: a population is randomized to receive a test vaccine or placebo
+  - Single or double blind: participants (and sometimes researcher) are not told which group they are in
+  - Because of randomization, confounding is not possible and with a large enough sample, the two group will be statistically identical other than vaccine treatment
+  - Any difference in infection acquisition can be attributed to vaccination.
+  - Can estimate ATE:
+    \[\begin{align}
+    \widehat{\text{ATE}}
+    &= E[Y^{\text{vaccine}}] - E[Y^{\text{placebo}}] \\
+    &= \frac{1}{n} \sum_{i=1}^n Y_i^{\text{vaccine}} - \frac{1}{m} \sum_{j=1}^m Y_j^{\text{placebo}}
+    \end{align}\]
+  - $H_0: \widehat{\text{ATE}} = 0, H_1: \widehat{\text{ATE}} > 0$
+  - Two sample t-test is sufficient
+- Randomization: what would the treatment and control populations look like for the work training data if treatment were randomized?
+
+```{r randomization}
+set.seed(1234)
+lalonde$random <- sample(rep(c(TRUE, FALSE), length.out=dim(lalonde)[1]))
+ggplot(lalonde, aes(x=treat, fill=random)) + geom_bar(position = 'dodge')
+ggplot(lalonde, aes(x=age, fill=random)) +  geom_density(alpha=0.25)
+ggplot(lalonde, aes(x=black, fill=random)) + geom_bar(position = 'dodge')
+ggplot(lalonde, aes(x=hispan, fill=random)) + geom_bar(position = 'dodge')
+ggplot(lalonde, aes(x=married, fill=random)) + geom_bar(position = 'dodge')
+ggplot(lalonde, aes(x=nodegree, fill=random)) + geom_bar(position = 'dodge')
+ggplot(lalonde, aes(x=re74, fill=random)) +  geom_density(alpha=0.25)
+ggplot(lalonde, aes(x=re78, fill=random)) +  geom_density(alpha=0.25)
+```
+
+- Using natural randomization: In 1973 the Eldfell volcano in Iceland on the island of Heimaey erupted, destroying about 400 homes. The Icelandic government compensated those who lost their homes, many never returned. An [economics paper](https://www.nber.org/papers/w22392.pdf) showed that, among people less than 25 years old at the time of the eruption, those who had moved averaged four more years of schooling and earnings $27,000 greater per year than those from families who had kept their home.
+  - Because those who lost their homes was naturally randomized, this paper used instrumental variables
+  - The treatment was moving away and the outcome was later earnings
+  - Losing home -> moving away -> later earnings
+  - We are not going to focus on instrumental variables analysis here
+  - Used when there is a natural experiement
+  
+## Inverse Probability Treatment Weighting (treatment not randomized)
+
+- In observational data, the population receiving a treatment is difficult to compare to the other groups because of possible confounding
+  - In the first example, the treatment and non-treatment populations had different severity levels, so are hard to compare directly
+  ```{r treatment2}
+  table(df$treatment, df$symptoms)
+  chisq.test(df$treatment, df$symptoms)
+  ```
+  - For comparison, we want the treatment and placebo populations to be generated from the same distribution
+  - This breaks any association between confounders and treatment
+- IPTW uses (possible) confounders to up- or down-weight observations depending on their probability of  receiving treatment
+  - These are called propensity scores - they indicate propensity for an observation to be in the the treatment group
+  - IPTW makes the populations look similar for the considered covariates
+  - Side note: Sometimes people are matched on covariates.  What is a possible draw back of matching?  What about many covariates
+- Why not use regression to control for confounders [McCaffrey et all 2013](https://onlinelibrary.wiley.com/doi/pdf/10.1002/sim.5753?casa_token=-_Iuef6qRG0AAAAA:jACp_crwgA9QTkHCNfDi-4lJuMDbCXkHDocwRzvvnky5S6rPDQ-j-Cn8QtXNvK5eCKz0ziJ5cURXTw):
+  1. By summarizing all pretreatment variables to a single score, propensity scores are an important dimension reduction tool for evaluating treatment effects. This characteristic of propensity scores is particularly advantageous over standard adjustment methods when there exists a potentially large number of pretreatment covariates.
+  2. Propensity score methods derive from a formal model for causal inference, the potential outcomes framework, so that causal questions can be well defined and explicitly specified and not conflated with the modeling approach as they are with traditional regression approaches.
+  3. Propensity score methods do not require modeling the mean for the outcome. This can help avoid bias from misspecification of that model.
+  4. Propensity score methods avoid extrapolating beyond the observed data unlike parametric regression modeling for outcomes, which extrapolate whenever the treatment and control groups are disparate on pretreatment variables.
+  5. Propensity score adjustments can be implemented using only the pretreatment covariates and treatment assignments of study participants without any use of the outcomes. This feature of propensity score adjustments is valuable because it eliminates the potential for the choice of model specification for pretreatment variables to be influenced by its impact on the estimated treatment effect.
+- Assumptions:
+  1. Sufficient overlap: For all $i$
+  \[0 < P(A=1|C=x_i) < 1\]
+  2.  No unknown confounders: $A \perp Y^t | X$ for $t=0,1$
+  
+- IPW: For each observation, $i$, the associated weight is
+\[w_i = \frac{1}{P(A=1|C=x_i)} = \frac{1}{P(i \text{ gets treatment})}\]
+
+- Propensity score Theorem
+  \[(Y^0,Y^1) \perp A | X \Rightarrow (Y^0, Y^1) \perp A | w(X)\]
+
+## Estimating Weights
+
+- There is no standard method for model selection in the context of estimating propensity scores for IPTW for multiple treatments
+- It's common to use non-parametric methods for estimating probabilities
+- Note that in this context, we care more about the prediction value than the interpretation of parameter estimates
+
+**Logistic Regression**
+```{r logisticPropensity}
+prop.mod <- glm(treat ~ age + educ+  black + hispan + married + nodegree + re74 + re75, data=lalonde, family=binomial())
+summary(prop.mod)
+treat_prop_logistic <- predict(prop.mod, newdata = lalonde[,-1], type = 'response')
+lalonde$logistic_prob <- treat_prop_logistic
+lalonde$logistic_weight <- ifelse(lalonde$treat, 1/(1-treat_prop_logistic), 1/treat_prop_logistic)
+head(lalonde)
+hist(lalonde$logistic_weight)
+boxplot(logistic_prob ~ treat, data=lalonde)
+```
+
+- Assessing covariate balance after weighting
+\[PSB_k = \frac{| \bar X_{k1} - \bar X_{k0}|}{\widehat \sigma_k}\]
+where $\bar X_{kt} = \sum_{i=1}^n I(A=t) X_{ki} w_i / \sum_{i=1}^n I(A=t) w_i$
+
+**Boosting**
+
+![Boosting Depication](https://udacity-reviews-uploads.s3.us-west-2.amazonaws.com/_attachments/19273/1524688880/boosting_final.png)
+[Source](https://udacity-reviews-uploads.s3.us-west-2.amazonaws.com/_attachments/19273/1524688880/boosting_final.png)
+[Youtube video on AdaBoost](https://www.youtube.com/watch?v=-DUxtdeCiB4)
+
+```{r boosted}
+boosted.mod <- ps(treat ~ age + educ + black + hispan + married + nodegree + re74 + re75,
+                  data=lalonde,
+                  estimand = "ATE",
+                  n.trees = 5000, 
+                  interaction.depth=2, 
+                  perm.test.iters=0, 
+                  verbose=FALSE, 
+                  stop.method = c("es.mean"))
+summary(boosted.mod)
+summary(boosted.mod$gbm.obj,
+        n.trees=boosted.mod$desc$es.mean.ATE$n.trees, 
+        plot=FALSE)
+lalonde$boosted <- get.weights(boosted.mod)
+hist(lalonde$boosted)
+plot(boosted.mod)
+plot(boosted.mod, plots=2)
+plot(boosted.mod, plots=3)
+bal.table(boosted.mod)
+```
+
+see [twang documentation](https://cran.r-project.org/web/packages/twang/twang.pdf)
+
+- Assessing covariate balance with standardize bias estimation
+\[SB_k = \frac{|\bar X_{k1} - \bar X_{k0}|}{\hat \sigma_k}\]
+
+## Estimating Average Treatment Effect (ATE)
+- Want $E[Y^1] - E[Y^0]$
+- Treatment population mean estimate:
+\[\widehat\mu_t = \frac{\sum_{i=1}^n I(T_i=t) Y_i w_i(t)}{\sum_{i=1}^n I(T_i=t) w_i(t)}\]
+
+```{r outcome}
+library(survey)
+design <- svydesign(ids=~1, weights=~boosted, data=lalonde)
+glm1 <- svyglm(re78 ~ treat, design=design)
+summary(glm1)
+
+summary(lm(re78 ~ treat + age + educ+  black + hispan + married + nodegree + re74 + re75, data=lalonde))
+```
+
+- interpretation: causal vs statistical
+- Limitation: Umeasured confounding
+```{dot unmeasured, out.width = "30%", echo=FALSE}
+digraph G {
+  X -> A
+  X -> Y
+  U -> A
+  U -> Y
+  A -> Y [constraint=false]
+}
+```
+
+
+## Writing tips
+
+- Intro paragraph:
+  - Give the big picture in one sentence.  What is the general application field?
+  - What is the problem you are attempting to answer?
+  - How will you answer it?
+  - In one sentence, what did you find?
+- Give the baseline characteristics of the data after cleaning
+  - How many observations with salient brake down
+  - A table is a very efficient way to summarize data:
+  
+| | Total (n)       | Treatment (n1) | Control (n2)  | p-value |
+| ---- | ------------- | ------------- | ----- | ---- |
+| Covariate 1 | mean (sd)      | mean (sd) | mean (sd) | <0.001 |
+| Covariate 2 | %  | %  |   % | 0.34 |
+| Covariate 3 | median (q1, q3) |  median (q1, q3)   |  median (q1, q3) | 0.02 |
+
+- Present you most important model (or models)
+  - Clearly interpret the parameter of interest and its connection to the larger question that is being asked
+  - A lot of this material is technical.  You're job is to understand the larger statistical picture and communicate it in an easy to understand way to someone who does not have any background in statistics an who probably does not do math regularly
+- Example: how would you describe IPW to a client?
+  1. Why do we use IPW in the first place?
+  2. What does IPW do?
+  3. How does IPW attempt to allow a causal interpretation for ATE?
+- Conclusion:
+  - Restate what you attempted to answer
+  - State any potential limitation
+  - Reiterate findings
+- Don't
+  - try to explain d-separation or Bayesian networks
+  - think of a statistician as your audience
+- Do
+  - rely on intuition about causation
+  - use your understanding of causal modeling to answer the question
+

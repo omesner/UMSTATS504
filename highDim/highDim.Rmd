@@ -1,0 +1,579 @@
+---
+title: "High Dimensional Analysis"
+author: "Octavio Mesner"
+date: "11/9/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## The data: Curing lymphoma
+- Diffuse large B-cell lymphoma (DLBCL) is the most common lymphoid malignancy in adults
+- Curable in < 50% of patients (in 2002)
+- This [paper](https://idp.nature.com/authorize/casa?redirect_uri=https://www.nature.com/articles/nm0102-68&casa_token=vw6a-r_uXz8AAAAA:PBI84ZmryGuDsD_exYAi6aTypeES0fxnpFfASvUwbJ7o_Ihb5FsyW_IvxXGlrCj4UlIyydKIpRIbH4rx8A) use a supervised learning model on 6817 gene expressions (microarray) from 71 patients to distinguish between DLBCL and follicular lymphoma (FL).
+- This data is on [Github](https://github.com/ramhiser/datamicroarray/wiki/Shipp-%282002%29)
+
+```{r data}
+load("./shipp.RData")
+ls() # .RData files can include any R data structure.  The "ls()" command shows what it contains.
+names(shipp)
+dim(shipp$x)
+names(shipp$x)[1:10]  #first 10 var names
+shipp$x[1:10,1:6]
+table(shipp$y)
+```
+
+```{r naiveMultiple}
+pvals <-c()
+for(var in names(shipp$x)){
+  pvals <- c(pvals, t.test(shipp$x[[var]] ~ shipp$y)$p.value)
+}
+hist(pvals)
+sum(pvals < 0.05)/length(pvals) # pct significant at alpha = 0.05
+```
+
+**Multiple testing error**
+
+What would we get if none were significant?
+
+The data below are generated randomly and independent from the outcome
+
+```{r null}
+set.seed(1234)
+null_dat <- data.frame(matrix(rnorm(dim(shipp$x)[1] * dim(shipp$x)[2]), ncol=dim(shipp$x)[2]))
+dim(null_dat)
+null_pvals <-c()
+for(var in names(null_dat)){
+  null_pvals <- c(null_pvals, t.test(null_dat[[var]] ~ shipp$y)$p.value)
+}
+hist(null_pvals)
+sum(null_pvals < 0.05)/length(null_pvals) # pct significant at alpha = 0.05
+```
+
+- Intuitively, what is the problem here?  Why are so many p-values $<0.05$ when none are associated with the outcome?
+- Why do they look uniform?
+
+**Theorem:** p-values are uniformly distributed under the null hypothesis.
+
+![p-value illustration](./pval.png)
+
+[image from here](http://blog.analytics-toolkit.com/2017/statistical-significance-ab-testing-complete-guide/)
+
+*Proof:*
+
+First, notice that a random variable $Y$ is uniformly distributed on $[0,1]$ iff $P[Y < y] = y$ on $[0,1]$.  So, we will try to show that $P[ \text{p-value} < y] = y$ under the null hypothesis.
+
+Second, note that if $X \sim F$ (random variable $X$ distributed according to $F(x) = P(X < x)$) be a continuous random variable, then $F(X) \sim \text{Unif}(0,1)$.
+Because $X$ is continuous, $F$ must be monotone and therefore has inverse function $F^{-1}$.
+\[
+\begin{align*}
+P[F(X) < y]
+&= P[F^{-1}(F(X)) < F^{-1}(y)] \\
+&= P(X < F^{-1}(y)) \\
+&= F(F^{-1}(y)) \\
+&= y
+\end{align*}
+\]
+This indicates that $F(X) \sim \text{Unif}(0,1)$ for any random variable.
+
+Third, let $T$ be a test statistics with a CDF of $G$ under the null.
+The $\text{p-value} = G(T)$.
+So, under the null hypothesis, p-value $\sim$Unif(0,1).
+
+$\blacksquare$
+
+## Multiple Testing
+
+- Want to run $m$ tests
+- Let $H_{0,i}$ be the null hypothesis for the $i$th test where $1 \leq i \leq m$
+- Let $p_i$ be the p-value of the $i$th test for $H_{0,i}$
+- Let $R_i = 1$ if we reject $H_{0,i}$ and $R_i = 0$ if we fail to reject $H_{0,i}$ (sometimes called a discovery or positive result)
+- $R = \sum_{i=1}^m R_i$ be the number of rejected tests
+- Let $V_i = 1$ if we wrongly reject $H_{0,i}$ (false positive or type 1 error or false discovery)
+- Let $V = \sum_{i=1}^m V_i$ be the false positive (discovery) count
+
+- **Family-wise error rate (FWER)** 
+\[P[V>0] \leq \alpha\]
+  Same as $P[V=0] \geq 1-\alpha$
+- **Per family error rate (PFER)**
+  \[E[V] \leq \alpha\]
+- **False discovery rate (FDR)** controls
+\[E\left[\frac{V}{R}\right]\]
+  - If $R=0$, use $R=1$ instead
+
+- **Global null**
+
+  - Can we reject at least one of the $m$ null hypotheses?
+  - The global null hypothesis is
+\[H_0 = \bigcap_{i=1}^m H_{0,i}\]
+  - Does not indicate which $H_{0,i}$ to reject, only that we can reject at least one $H_{0,i}$
+
+### Tests
+
+**Bonferroni**
+
+- Reject $H_{0,i}$ if $p_i \leq p_{\text{Bon}} := \frac{\alpha}{m}$
+- uses FWER, tells us which $H_{0,i}$ we can reject
+
+*proof*
+
+Let $I := \{i: H_{0,i} = 1\}$ be the set of true null hypotheses.
+\[
+\begin{align}
+P[V>0]
+&= P\left[ \bigcup_{i\in I} \left\{ p_i \leq \frac{\alpha}{m} \right\} \right]\\
+&\leq \sum_{i\in I} P\left[p_i \leq \frac{\alpha}{m}\right] & \text{Union bound}\\
+&= \sum_{i\in I} \frac{\alpha}{m} &\text{because $p_i\sim$ Unif$(0,1)$ for $i\in I$}\\
+&= \frac{\alpha |I|}{m} \leq \alpha
+\end{align}
+\]
+
+More info on [union bound](https://en.wikipedia.org/wiki/Boole%27s_inequality)
+
+- Think about playing cards: $P[\text{Ace OR club}] \leq P[\text{Ace}] + P[\text{club}]$
+- Because of union bound, even holds when p-values are statistically dependent
+
+Using Bonferroni, which gene's should I recommend are associated with lymphoma?
+
+```{r bonferroni}
+bcorrection <- 0.05/length(pvals)
+bcorrection
+sum(pvals <= bcorrection)
+which(pvals <= bcorrection)
+```
+
+What about the independent simulated data?
+
+```{r bcorsim}
+which(null_pvals<=bcorrection)
+```
+
+- Notice that test may be associated (knowing one p-value may give information about others)
+- Bonferroni still works here
+- In many cases, Bonferroni is too strict (it rejects too many tests)
+- How could we construct a global null hypothesis from Bonferroni?
+  - If at least one $p_i \leq \frac{\alpha}{m}$, then we can reject global null
+
+**Fisher Combination**
+
+- Uses global null framework
+- Assumes that each $p_i$ is independent (why might this not be reasonable in most settings?)
+- If $H_{0,i}$ is true for each $i$ (and each test is independent), then
+\[
+T = \sum_{i=1}^m -2 \log(p_i) \sim \chi^2(2m)
+\]
+- uses that fact that transforming independent, uniform random variables this way will have a $\chi^2$ distribution
+- This test does not indicate which $H_{0,i}$ to reject
+- Why should we not use this test here?
+
+**Simes Test**
+
+- Uses global null framework
+- Order all p-values, $p_{(1)}\leq p_{(2)}\leq \dots \leq p_{(m)}$ for the $m$ hypotheses
+- Simes test statistic
+\[ p_{\text{Simes}} = \min_{i\in [m]} \left\{ \frac{m p_{(i)}}{i} \right\}\]
+- Reject global null if $p_{\text{simes}} \leq \alpha$
+  - Equivalent: Reject global null if any $p_{(i)} \leq \frac{i\alpha}{n}$
+- Proof is a little more complicated
+  - Need to show that $p_{\text{Simes}} \sim \text{Unif}(0,1)$
+  - Uses order statistics properties to show this
+- Does not require all $p_i$ are independent
+- More powerful (type II error is smaller) than Bonferroni global null test
+  - Bonferroni will reject global null when $m p_{(1)} \leq \alpha$
+
+```{r simes}
+simes <- function(vec) length(vec)*min(sort(vec)/(1:length(vec)))
+
+simes(pvals)
+simes(null_pvals)
+```
+
+- Coding tip: DRY (don't repeat yourself)
+- if you're tempted to copy your own code to reuse it, write a function for it instead
+
+**Kolmogorov-Smirnov Test**
+
+![image from wikipedia](./KS_Example.png)
+
+- compared empirical cdf to theoretical cdf
+  - Here: Assess fit of empirical p-value cumulative distribution compared to uniform
+- Uses global null framework
+- Empirical CDF of p-values is
+\[\hat F_m(t) = \frac{1}{m} \sum_{i=1}^m I(p_i \leq t)\]
+- Uniform CDF $F(t) = t$ for $t\in [0,1]$
+
+```{r kst}
+par(mfrow=c(1,2))
+plot(ecdf(null_pvals), col='red', xlim=c(0,1), ylim=c(0,1), 
+     main="Null Simulated")
+abline(c(0,0), c(1,1))
+plot(ecdf(pvals), col='red',
+     main="Real p-values")
+abline(c(0,0), c(1,1))
+```
+
+- Test statistic
+\[T_m = \sup_{t\in [0,1]} \left| \hat F_m(t) - t \right|\]
+- Using Hoeffding's inequality,
+\[P\left[ T_m > t \right] \leq 2\exp\left(-2t^2\right)\]
+- Reject global null if
+\[T_m > \sqrt{\frac{2\log(\frac{2}{\alpha})}{2}}\]
+
+```{r ksttest}
+ks.test(pvals, runif(100000))
+ks.test(null_pvals, runif(100000))
+```
+
+See [ks.test documentation](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/ks.test.html) for more info
+
+**Benjamini-Hochberg**
+
+- Method for controlling the false discovery rate (FDR)
+- Interpretation: At an FDR of $\alpha$, we would expect, at most, $\alpha$ of our significant tests to be false positives
+
+- Method:
+  1. Order all p-values, $p_{(1)}\leq p_{(2)}\leq \dots \leq p_{(m)}$ for the $m$ hypotheses
+  2. Let $j= \max\left\{i: p_{(i)} < \frac{i\alpha}{m}\right\}, T_{\text{BH}}=p_{(j)}$
+  3. Reject $H_{0,i}$ for $p_i\leq T_{\text{BH}}$
+- Alternative:
+  - adjust p-values using
+  \[\frac{m p_{(i)}}{i}\]
+
+*Proof outline*
+
+Recall
+\[\text{FDR} = E\left[\frac{V}{R}\right] = E\left[\frac{\text{# Type 1 Error}}{\text{# Rejections}}\right].\]
+Let $W_i=1$ if $H_{0,i}$ is true and $W_i=0$ otherwise.
+Let $G(t)$ be the true CDF of the p-values and let $\hat G(t)$ be the empirical CDF as before.
+\[
+\begin{align}
+\text{FDR} 
+&= E\left[\frac{V}{R}\right]\\
+&= E\left[\frac{\frac{1}{m}\sum_{i=1}^m W_i I(p_i < t)}{\frac{1}{m}\sum_{i=1}^m I(p_i < t)}\right]\\
+&\approx \frac{E\left[ \frac{1}{m}\sum_{i=1}^m W_i I(p_i < t) \right]}{E\left[\frac{1}{m}\sum_{i=1}^m I(p_i < t)\right]}\\
+&= \frac{t |I|}{G(t)} \leq \frac{t}{G(t)} \approx \frac{t}{\hat G(t)}
+\end{align}
+\]
+Let $t=p_{(i)}$ for some $i$.
+Notice that $\hat G(p_{(i)})=\frac{i}{m}$.
+Then $\text{FDR}= \frac{p_{(i)} m}{i}$.
+Setting this value equal to $\alpha$ and solving for $p_{(i)}$, we get the BH test statistic.
+
+```{r bh}
+bh_adj <- p.adjust(pvals, 'BH')
+round(bh_adj, 3)[1:10]
+round(pvals[1:10], 3)
+which(bh_adj < 0.05)[1:10]
+sum(bh_adj<0.05)
+```
+
+See [p.adjust documentation](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html) for more info
+
+**Final thoughts on multiple testing**
+
+- Family-wise error and false discovery
+- Only Bonferroni and Benjamini-Hochberg indicate which null hypotheses to reject, all others are global null
+- Many applied papers do not usre multiple testing procedures but should
+- Prediction, causation, and dependence
+  - Smoking and cancer can both be used to predict death, but should we use both?
+
+```{dot chain, echo=FALSE, out.width = '20%'}
+digraph G {
+  Smoking -> Cancer
+  Cancer -> Death
+}
+```
+
+- What about something more complex?
+  - pink and red variables will be associated with Outcome
+  - D and G are sufficient for prediction
+  - if D and G are used, other variables provide no additional accuracy
+  - regression takes this into account
+  - $\beta = [\beta_A, \beta_B, \beta_C, \beta_D, \beta_E,\beta_F, \beta_G, \beta_H, \beta_Q, \beta_R,\beta_S, \beta_T] = [0,0,0,\beta_D,0,0, \beta_G, 0,0,0,0,0]$ where $\beta_D,\beta_G\neq 0$
+  - $\{\beta_D,\beta_G\}$ is the *active* set
+  - What should the active set be if $G$ were missing?
+
+```{dot complex, echo=FALSE, out.width = '50%'}
+digraph G {
+  A -> D
+  A -> E
+  B -> E
+  E -> G
+  C -> G
+  D -> Outcome
+  F -> G
+  F -> H
+  G -> Outcome
+  G -> H
+  D [shape=circle, style=filled, fillcolor=red]
+  G [shape=circle, style=filled, fillcolor=red]
+  Outcome [shape=rectangle, style=filled, fillcolor=lightblue]
+  A [shape=circle, style=filled, fillcolor=pink]
+  B [shape=circle, style=filled, fillcolor=pink]
+  C [shape=circle, style=filled, fillcolor=pink]
+  E [shape=circle, style=filled, fillcolor=pink]
+  F [shape=circle, style=filled, fillcolor=pink]
+  H [shape=circle, style=filled, fillcolor=pink]
+  Q -> R
+  R -> S
+  T -> R
+}
+```
+
+
+## Penalized Regression
+
+**Ordinary least squares**
+\[\text{Have }
+\mathbf{X} = \begin{bmatrix}
+X_{11} & X_{12} & \cdots & X_{1p}\\
+X_{21} & X_{22} & \cdots & X_{2p}\\
+\vdots & \vdots & \ddots & \vdots\\
+X_{n1} & X_{n2} & \cdots & X_{np}\\
+\end{bmatrix},
+\mathbf{y}= \begin{bmatrix}
+y_1\\
+y_2\\
+\vdots\\
+y_n
+\end{bmatrix}.
+\text{  Want to estimate }
+\mathbf{\beta}= \begin{bmatrix}
+\beta_1\\
+\beta_2\\
+\vdots\\
+\beta_p
+\end{bmatrix}
+\]
+so that 
+\[\hat\beta = \text{arg} \min_\beta \left| \mathbf{y} - \mathbf{X}\mathbf{\beta}\right|\]
+
+Using calculus, it's easy to show that
+\[\hat \beta = \left(\mathbf X^T \mathbf X\right)^{-1} \mathbf X^T \mathbf y\]
+
+OLS Pros:
+
+- When true relationship between response and predictors is approximately linear, low bias
+- When $n \gg p$, low variance
+
+OLS Cons:
+
+- When $n \not\gg p$, *overfitting* can be a problem
+- $\left(\mathbf X^T \mathbf X\right)^{-1}$ only exists for $n >> p$.
+
+**Ridge Regression**
+
+\[\hat\beta = \text{arg} \min_\beta \frac{1}{n}\sum_{i=1}^n\left( y_i - X_i^T\mathbf{\beta}\right)^2 + \lambda\|\beta\|_2^2\]
+
+Note: The Euclidean norm, $\|x\|_2=\sqrt{x_1^2+x_2^2+\cdots+x_p^2}$ for $x\in \mathbb{R}^p$
+
+Similar to OLS, $\hat \beta$ also has a closed form
+\[\hat \beta = \left(\mathbf X^T \mathbf X + \lambda I \right)^{-1} \mathbf X^T \mathbf y\]
+where $I$ is the identity matrix
+
+```{r ridge}
+### Generating data
+sample_size <- 50 # remember DRY
+set.seed(1234)
+num_active_vars <- 10
+num_null_vars <- 20
+true_beta <- 2*runif(num_active_vars) # randomly choosing true beta
+true_beta
+active_x <- matrix(rnorm(sample_size*num_active_vars), nrow=sample_size)
+null_x <- apply(matrix(3*rnorm(sample_size*num_null_vars), nrow=sample_size), 2,
+                function(x) x + 10*runif(1))
+y <- active_x %*% true_beta + rnorm(sample_size)
+dim(y) #sanity check
+dat <- data.frame(cbind(active_x, null_x, y))
+dim(dat)
+names(dat)
+names(dat)[31] <- 'Y' # renaming response variable
+head(dat)
+
+# install.packages("glmnet", repos = "http://cran.us.r-project.org") # only need 1st time
+library(glmnet)
+design_mat <- cbind(active_x, null_x) # glmnet only takes matrices, not dataframes
+l2_fit <- glmnet(design_mat, y, family="gaussian", alpha=0) # alpha = 0 gives Ridge regression
+plot(l2_fit, xvar='lambda', label=TRUE)
+names(l2_fit)
+coef(l2_fit)[1:10,1:5]
+l2_fit$lambda
+
+glmnet_plot <- function(fit, num_active){ #assumes active vars are first
+  plot(0, type='n', ylim = range(coef(fit)[-1,]), xlim = log(range(fit$lambda)),
+     ylab = "Coefficient", xlab="log(lambda)")
+  num_vars <- dim(coef(fit))[1]-1 # removing intercept
+  for(itr in 1:num_vars){
+    active = c(rep('red', num_active), rep('gray', num_vars-num_active))
+    lines(log(fit$lambda), coef(fit)[itr+1,], col=active[itr])
+    legend('topright', legend = c('True Non-Zero', 'True Zero'), col=c('red', 'gray'), lty = 1)
+  }
+}
+glmnet_plot(l2_fit, num_active_vars)
+```
+
+- As $\lambda$ gets bigger, coefficients shrink
+- Notice that the coefficients get closer to zero but are never exactly zero
+- Because of closed form, fast to compute
+
+**LASSO**
+
+\[\hat\beta = \text{arg} \min_\beta \frac{1}{n}\sum_{i=1}^n\left( y_i - X_i^T\mathbf{\beta}\right)^2 + \lambda\|\beta\|_1\]
+
+- The $L_1$ norm or taxicab norm, $\|x\|_1=|x_1|+|x_2|+\cdots+|x_p|$ for $x\in \mathbb{R}^p$
+
+![from wikipedia](./Manhattan_distance.png)
+
+
+```{r lasso}
+l1_fit <- glmnet(design_mat, y, family="gaussian", alpha=1) # alpha=1 gives lasso 
+glmnet_plot(l1_fit, num_active_vars)
+```
+
+- $L_1$ penalty generates sparse $\beta$ (many zeros)
+- As $\lambda$ gets bigger, $\beta$ shrinks and some go to zero
+- Because of the absolute value, this function is not differentiable everywhere, standard optimization uses coordinate descent, also fast
+- if $p>n$, lasso selects at most $n$ variables
+- if using grouped (dummy) variables (like race or other categorical variables with more than 2 levles), lasso will ignore groups
+- Can be erratic on collinear data
+
+```{r lassoCollinear}
+set.seed(1234)
+dm_half <- design_mat[, c(1:5, 11:21)] # taking half of active and null columns
+collin_vars <- dm_half+ 0.1*matrix(rnorm(dim(dm_half)[1]*dim(dm_half)[2]), nrow=sample_size) #collinear vars
+collin_dm <- cbind(dm_half[,1:5], collin_vars[,1:5], dm_half[,6:16], collin_vars[,6:16])
+l1_fit_collin <- glmnet(collin_dm, y, family="gaussian", alpha=1)
+glmnet_plot(l1_fit_collin, num_active_vars)
+```
+
+**Difference between Ridge and LASSO**
+
+- Why does the $L_1$-norm penalty in LASSO zero out some $\beta$ values but not for the $L_2$-norm penalty in Ridge?
+
+![from Elements of Statistical Learning](./L2vsL1penalty.png)
+
+- Think of XY-plane as all possible values of $\beta = (\beta_1,\beta_2)$
+- Without the penalty $h(\beta_1,\beta_2) = \frac{1}{n}\sum_{i=1}^n (y_i-X_i^T\beta)^2$
+  - because $h$ is quadratic, it forms a [parabolid](https://en.wikipedia.org/wiki/Paraboloid)
+  - Want to find values of $(\beta_1,\beta_2)$ that minimize $h$
+- $g(\beta_1,\beta_2) = \|\beta\|_1$ is an upside down pyramid with its bottom point at the origin
+  - the level contours create empty diamond-shapes ($\{(x_1,x_2): \|(x_1,x_2)\|_1=z\}$ is a diamond-shape)
+- By adding these two functions, the optimization must balance the contribution from each
+  - $h$ wants the paraboid min and $g$ wants the origin
+  - Because $g$ has a sharp point, the lowest contour of $h$ will likely hit there first
+  
+  ![like in this image](https://i.stack.imgur.com/UaoPh.png)
+
+**Elastic Net**
+
+\[\hat\beta = \text{arg} \min_\beta \frac{1}{n}\sum_{i=1}^n\left( y_i - X_i^T\mathbf{\beta}\right)^2 + \lambda\left[(1-\alpha)\|\beta\|_2^2/2 + \alpha|\beta\|_1\right]\]
+
+```{r elastic}
+l5_fit <- glmnet(design_mat, y, family="gaussian", alpha=0.5) 
+glmnet_plot(l5_fit, num_active_vars)
+```
+
+![[image from here](https://corporatefinanceinstitute.com/resources/knowledge/other/elastic-net/)](./elastic.png)
+
+
+- $L_1$ penalty generates sparse model
+- $L_2$ penalty
+  - number of selected variables not bounded by $n$
+  - stabilizes $L_1$ regularization path
+
+### Overfitting and Model Validation
+
+![[image from here](https://www.quora.com/What-are-the-key-trade-offs-between-overfitting-and-underfitting)](./overfitting.png)
+
+- Data generation paradigm: $Y = f(X) + \epsilon$ = signal + random noise
+- prediction goal: estimate $f$ with a model $\hat f$
+- Overfitting is including random noise into a prediction model
+- Complex models are more likely to overfit
+- Simple models are more likely to underfit (miss signal)
+- Issue: how much complexity is too much?
+- Question: Does a large $\lambda$ correspond more or less complexity?
+- How do we assess fit?
+
+**Validation**
+
+- If a model has good fit, it should be able to make accurate predictions on new data
+- Held out validation: 
+  1. Randomly split data into training set and test set (why random?)
+  2. Fit many different models on the training set
+  3. Use each model to make predictions on test set
+  4. Evaluate predictions and choose simplest model with most accurate predictions
+  
+```{r heldout}
+# this code is for learning
+# don't do it this way in practice
+set.seed(1234)
+# step 1
+test_ind <- sample(1:sample_size, 10, replace=FALSE)
+test_ind
+train_ind <- (1:sample_size)[! 1:sample_size %in% test_ind]
+train_ind
+
+# step 2
+lambdas <- 10^(seq(-2, 1, by=0.25))
+train_fit <- glmnet(design_mat[train_ind,], y[train_ind], family="gaussian", alpha=0.5, lambda=lambdas)
+
+# step 3
+test_preds <- predict(train_fit, newx=design_mat[test_ind,], type='response')
+test_preds
+
+# step 4
+# calculating mean squared error for each model
+mses <- apply(test_preds, 2, function(x) mean((x-y[test_ind])^2))
+cbind(mses, train_fit$lambda) # showing MSE with lambda value
+plot(log10(train_fit$lambda), mses, type='b')
+coef(train_fit, s=0.56234133) # coefficients for chosen model
+
+# Comparing to the real betas
+true_beta
+```
+
+**Cross Validation**
+
+![[image from here](https://www.kaggle.com/alexisbcook/cross-validation)](./crossvalidation.png)
+
+- Normally used over held out validation
+- Runs held out validation $k$-fold times
+Steps:
+1. Partition data into $k$ folds
+2. Run held out validation $k$ times:
+  i. On step $j$, train model on all folds with the $j$th fold removed
+  ii. Run predictions with trained model on $j$th fold
+  iii. Save predictions
+3. Evaluate model using loss function
+
+- glmnet does all of this for you
+
+```{r glmnetcv}
+cv_fit0 <- cv.glmnet(design_mat, y, family="gaussian", alpha=0, nfolds=5)
+cv_fit1 <- cv.glmnet(design_mat, y, family="gaussian", alpha=1, nfolds=5)
+cv_fit5 <- cv.glmnet(design_mat, y, family="gaussian", alpha=0.5, nfolds=5)
+
+par(mfrow=c(1,3))
+plot(cv_fit0, sub='Ridge')
+plot(cv_fit1, sub='Lasso')
+plot(cv_fit5, sub='Elastic Net')
+```
+
+- Number above plot indicates number of nonzero coefficients at current $\lambda$
+
+**Gene data with penalized regression**
+
+Which penalized regression model should we use?
+
+```{r elasticnetGenedat}
+gene_mat <- as.matrix(shipp$x)
+gene_fit <- glmnet(gene_mat, shipp$y, family="binomial", alpha=0.5)
+plot(gene_fit, xvar='lambda', label=TRUE)
+
+gene_fit_cv <- cv.glmnet(gene_mat, shipp$y, family="binomial", alpha=0.5, nfolds=5)
+plot(gene_fit_cv)
+```
+
