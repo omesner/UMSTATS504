@@ -1,7 +1,7 @@
 ---
 title: "COMPAS Recidivism Algorithm Case Study"
 author: "Octavio Mesner"
-date: "9/21/2020"
+date: "1/28/2021"
 output: 
   html_document:
     keep_md: true
@@ -13,22 +13,12 @@ header-includes:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-## About me
-
-- Worked as a biostatistician for 5 years in HIV/STI research
-- Did joint PhD in Engineering and Public Policy and in Statistics and Data Science
-- Thesis topic on non-parametric causal discovery
-- First time teaching this class, I would appreciate constructive feedback
-- Course goal: prepare students in this class for master-level consulting
-
 ## Consulting Skills Focus
 
 - In real life consulting, the client will frequently understand the data and surrounding research better than the statistician.
-- Question: have many have done statistical consulting in the past?
 - Analysis should center around a well-defined research question that drive the analysis and the data should be able to provide insight on the question of interest.
 - Bias and data analysis: We all have bias.  This can influence data analysis.  A data analyst, we should do our best to objectively present the data.  When necessary to make assumptions, state them explicitly.  
 - Researchers frequently want "positive results."  Usually this means significant p-values.  Variable selection is a simple way to change p-values, p-hacking.  It's common to need to change variables in a model be it should be done a principled way.
-- Analysis should be transparent and reproducible.  [R Markdown](https://rmarkdown.rstudio.com) and [Jupyter Notebook](https://jupyter.org) make this very easy.  This work is done in R Markdown.  At the end of this case study, you will need to include your reproducible analysis along with the memo.
 
 ## Case Study Background
 
@@ -117,15 +107,16 @@ Is this the best way to present this information?
 - How could we quantify bias in this case?  Are race and COMPAS still associated after taking recidivism into account?
 - It is tempting to use `decile_score ~ is_recid + race` to quantify the association between COMPAS and race while controlling for recidivism.
 
-## Collider Bias
+## Causation and Collider Bias
 
-[Causal comic](https://xkcd.com/552/)
+![Causal comic](https://imgs.xkcd.com/comics/correlation.png)
 
-**Scenario 1:**
-```{r chain, echo=FALSE, out.width = '40%'}
+**Bayesian Network 1:**
+```{r chain, echo=FALSE, out.width = '40%', out.height= '40%'}
 library(DiagrammeR)
-grViz("digraph flowchart {A -> B -> C;}")
+grViz("digraph flowchart {A -> B -> C [constraint=false]}")
 ```
+
 What would a regression model of `C ~ A + B` yield?
 
 ```{r}
@@ -144,8 +135,8 @@ summary(lm(C~A))
 Does this coefficient and intercept estimate make sense?
 $C = 5B + 3 + \epsilon_B = 5(-2A - 25 + \epsilon_A) = -10A - 122 + 5\epsilon_A + \epsilon_B$
 
-**Scenario 2:**
-```{r fork, echo=FALSE, out.width = '40%'}
+**Bayesian Network 2:**
+```{r fork, echo=FALSE, out.width = '40%', out.height='40%'}
 grViz("digraph flowchart {A -> B; A -> C;}")
 ```
 
@@ -159,8 +150,8 @@ summary(lm(C~A+B))
 ```
 What about this regression model: `C ~ A`?  Try it!
 
-**Scenario 3:**
-```{r collider, echo=FALSE, out.width = '40%'}
+**Bayesian Network 3:**
+```{r collider, echo=FALSE, out.width = '40%', out.height='40%'}
 grViz("digraph flowchart {A -> C; B -> C;}")
 ```
 
@@ -173,7 +164,7 @@ C <- -4*A + 5*B + 3 +rnorm(size)
 summary(lm(C~A+B))
 ```
 
-**Scenario 3 with `A` as the outcome:**
+**Bayesian Network 3 with `A` as the outcome:**
 ```{r}
 summary(lm(A~B+C))
 summary(lm(A~B))
@@ -318,7 +309,7 @@ ph$t_atrisk <- ph$end - ph$start
 
 survobj <- with(ph, Surv(t_atrisk, event))
 fit0 <- survfit(survobj~1, data=ph)
-summary(fit0)
+# summary(fit0)
 plot(fit0, xlab="Time at risk of recidivism in Days", 
    ylab="% not rearrested", yscale=100,
    main ="Survival Distribution (Overall)") 
