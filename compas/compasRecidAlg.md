@@ -13,10 +13,10 @@ header-includes:
 
 ## Consulting Skills Focus
 
-- In real life consulting, the client will frequently understand the data and surrounding research better than the statistician.
+- In real life consulting, the client will frequently understand the data and surrounding research better than the data scientist/statistician.
 - Analysis should center around a well-defined research question that drive the analysis and the data should be able to provide insight on the question of interest.
-- Bias and data analysis: We all have bias.  This can influence data analysis.  A data analyst, we should do our best to objectively present the data.  When necessary to make assumptions, state them explicitly.  
-- Researchers frequently want "positive results."  Usually this means significant p-values.  Variable selection is a simple way to change p-values, p-hacking.  It's common to need to change variables in a model be it should be done a principled way.
+- Human bias and data analysis: We all have bias.  This can influence data analysis.  A data analyst, we should do our best to objectively present the data.  When necessary to make assumptions, state them explicitly.  
+- Publication Bias example: Researchers frequently want "positive results."  Usually this means significant p-values.  Variable selection is a simple way to change p-values, p-hacking.  It's common to need to change variables in a model be it should be done a principled way.
 
 ## Case Study Background
 
@@ -221,11 +221,11 @@ Is this the best way to present this information?
 
 ## Causation and Collider Bias
 
-![Causal comic](https://imgs.xkcd.com/comics/correlation.png)
+![XKCD causal comic](https://imgs.xkcd.com/comics/correlation.png)
 
 **Bayesian Network 1:**
-<!--html_preserve--><div id="htmlwidget-3db91ffa7d96f84eb6ce" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-3db91ffa7d96f84eb6ce">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-326b1081883438d8d7e5" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-326b1081883438d8d7e5">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 What would a regression model of `C ~ A + B` yield?
 
@@ -291,8 +291,8 @@ Does this coefficient and intercept estimate make sense?
 $C = 5B + 3 + \epsilon_B = 5(-2A - 25 + \epsilon_A) = -10A - 122 + 5\epsilon_A + \epsilon_B$
 
 **Bayesian Network 2:**
-<!--html_preserve--><div id="htmlwidget-07179637e548ac48bb89" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-07179637e548ac48bb89">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-b1ad7edefcb0dd04b8bd" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-b1ad7edefcb0dd04b8bd">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 
 ```r
@@ -328,8 +328,8 @@ summary(lm(C~A+B))
 What about this regression model: `C ~ A`?  Try it!
 
 **Bayesian Network 3:**
-<!--html_preserve--><div id="htmlwidget-6860a906ea9ddf7d2d41" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-6860a906ea9ddf7d2d41">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-a515b24ea7a73307eb68" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-a515b24ea7a73307eb68">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 
 ```r
@@ -421,9 +421,9 @@ summary(lm(A~B))
 - Consider $A\sim \text{Bernoulli}(0.5), B\sim \text{Bernoulli}(0.5)$ (independent coin flips), and $C = A\cdot B$.  
 - $A$ and $B$ are independent; that is, knowledge of $B$ give no information on the value of $A$. But, additional knowledge of $C$ does give information about the value of $A$.
 
-**Scenario 4**
-<!--html_preserve--><div id="htmlwidget-d4e2ed1793bbe008cc97" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-d4e2ed1793bbe008cc97">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+**Bayesian Network 4**
+<!--html_preserve--><div id="htmlwidget-b77aa1ae2a8527125bfc" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-b77aa1ae2a8527125bfc">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 
 ```r
@@ -485,16 +485,16 @@ summary(lm(C~A))
 ## COMPAS and possible collider bias
 
 COMPAS uses [questionnaire](https://www.documentcloud.org/documents/2702103-Sample-Risk-Assessment-COMPAS-CORE.html) responses (Q in the diagram) to predict recidivism.  
-<!--html_preserve--><div id="htmlwidget-7805ef81732293aacbb2" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-7805ef81732293aacbb2">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; Race -> Recidivism}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-3e0ec68a90e438412ac7" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-3e0ec68a90e438412ac7">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; Race -> Recidivism}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Because COMPAS is used in sentencing, it may actually impact recidivism as well.
-<!--html_preserve--><div id="htmlwidget-4a7cc72193daa55b0bc8" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-4a7cc72193daa55b0bc8">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-d3a2af428d1d90cc10cc" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-d3a2af428d1d90cc10cc">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 One way to quantify racial bias in COMPAS would be to isolate the link between race and COMPAS that is not associated with recidivism.  But, it is not clear how to untangle this from potential collider bias.
-<!--html_preserve--><div id="htmlwidget-142e8326f52b655747ba" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-142e8326f52b655747ba">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism; Race-> COMPAS}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-ff031734e906a9340ee0" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-ff031734e906a9340ee0">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism; Race-> COMPAS}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 If we used `decile_score ~ is_recid + race` as a model to quantify bias, it seems very likely that there will be collider bias.
 
@@ -538,38 +538,61 @@ In the regression above, several race indicator variables are significant.  But,
 
 **Set up**
 
-Assume that $T$ is the time until an event randomly occurs.
-For example, $T$ might be the duration from cancer treatment until remission or death.
-
-
-Let $f(t)$ be a probability density function where $t$ is time, $T\sim f$ be a random variable, and let $F(t)=P(T<t)=\int_0^tf(x)dx$ be its cumulative distribution function.
-Define the survival function as $S(t)=P(T>t)=1-F(t)$ and the hazard function as
+- Assume that $T$ is the time until an event randomly occurs.
+- For example, $T$ might be the duration from cancer treatment until remission or death.
+- $T\sim f$: $f(t)$ is the probability density function (pdf) of $T$ where $t$ is time
+- $F(t)=P(T<t)=\int_0^tf(x)dx$ is cumulative distribution function (cdf) of $T$
+- Survival function:
+$$S(t)=P(T>t)=1-F(t)$$
+- The survival function gives the probability of not having an event before time $t$ (survive until $t$)
+- Hazard function:
 \[
 \lambda(t)=\lim_{h\rightarrow 0} \frac{P(t<T\leq t+h)}{P(T>t)}= \frac{f(t)}{S(t)} = -\frac{d\log S(t)}{dt}.
 \]
-Notice that $f(t)=\lambda(t)S(t)$.
-
-The cumulative hazard function is defined as
+- Hazard give the instantaneous probability of an event at time $t$ given survival until time $t$
+- Notice that $f(t)=\lambda(t)S(t)$
+- Cumulative hazard function:
 \[
 \Lambda(t)= \int_0^t\lambda(x)dx=-\int_0^td\log S(x)=-\log S(t).
 \]
-So,
+- How to get the survival function from the hazard function:
 \[
 S(t)=\exp[-\Lambda(t)].
 \]
-Side note: If we model $\lambda(t)=\lambda$ (constant function), then $\Lambda(t)=\lambda t$. So, $f(t)=\lambda\exp(-\lambda t)$ is the exponential distribution.
+- Side note: If $\lambda(t)=\lambda$ (constant function), then $f$ is the exponential distribution:
+$$
+\begin{align*}
+  \lambda(t)=\lambda 
+  &\Leftrightarrow \Lambda(t)=\lambda t \\
+  &\Leftrightarrow S(t)=\exp(-\lambda t) \\
+  &\Leftrightarrow f(t)= \lambda(t) S(t) = \lambda\exp(-\lambda t)
+\end{align*}
+$$
 
 **Censoring at Random**
 
-With many of time-to-event studies, it is not always possible to wait for an event to occur for each participant before doing the analysis.  In a cancer study, for example, participants may drop out of the study before an event is observed or the study may close before each participant experiences an event.  This is call right censored data.
-While in some cases, a participant does not contribute the entire time until the event occurs, intuitively, we should be able to make use of the time where the event did not occur.
+- Not always possible to wait for an event to occur for each participant before doing the analysis
+- Cancer study example: participants may drop out of the study before an event is observed or the study may close before each participant experiences an event
+- This is call right censored data: have start time but end times can either be at event or drop out time
+- Question: For censored observations, how to make use of time duration without event?
 
 ![right censoring image from [here](http://reliawiki.org/index.php/Life_Data_Classification)](./Right_censoring.png)
 
-- Let $f(t;\theta), \lambda(t;\theta)$, and $S(t;\theta)$ be the density, hazard, and survival functions with parameter $\theta$ for the time to the event of interest.
-- We assume that censoring occurs at random (in independently from $f$), say it has cumulative distribution of $G(t;\phi)$ (with some parameter $\phi$) and density function, $g(t;\phi)$.
-- Let $(t_1, \delta_1),\dots, (t_n,\delta_n)$ be a sample of size $n$ where $\delta_i$ indicates censoring and $t_i$ is the time to event or censor.  That is $t_i \sim f(t;\theta)$ when $\delta_i=1$ and $t_i \sim g(t;\phi)$ when $\delta_i=0$.
-- The Likelihood is 
+- Model: $f(t|x; \theta)$ with corresponding hazard, $\lambda(t|x;\theta)$, and survival, $S(t|x;\theta)$
+- Want $\theta$ to quantify difference in risk (until event) among observations
+  - Note: $\theta$ quantifies how fast an event will likely occur for an observation but communicated in terms of risk of event
+- Assumption: censoring occurs at random (in independently from $f$)
+- Censoring cumulative probability distribution model:
+$$G(t;\phi)$$
+- Corresponding censoring pdf model:
+$$g(t;\phi)$$
+- Data:
+$$(t_1, \delta_1),\dots, (t_n,\delta_n)$$
+- $t_i$ for $i=1,\dots,n$ is duration of follow-up until either event or censor time
+- $\delta_i$ is event indicator:
+  - $\delta_i=1$ means that observation $i$ had an event and $t_i \sim f(t;\theta)$
+  - $\delta_i=0$ means that observation $i$ was censored and $t_i \sim g(t;\phi)$
+- Because $f$ and $g$ are independent (and because observations are independent), the likelihood is 
 \[
 \begin{align}
 L(\theta,\phi) &= \prod_{i=1}^n [f(t_i;\theta)[1-G(t_i;\phi)]]^{\delta_i} [g(t_i;\phi)S(t_i;\theta)]^{1-\delta_i}\\
@@ -578,25 +601,38 @@ L(\theta,\phi) &= \prod_{i=1}^n [f(t_i;\theta)[1-G(t_i;\phi)]]^{\delta_i} [g(t_i
 \end{align}
 \]
 
-- Unpacking this a bit, if we observe an event, its density is $f$ and censoring did not occur prior: $[f(t_i;\theta)[1-G(t_i;\phi)]]^{\delta_i}$.  
-If we observe censoring, its density is $g$ and an event did not occur prior: $[g(t_i;\phi)S(t_i;\theta)]^{1-\delta_i}$.
-But, we do not care about the censoring distribution, only the time to event distribution.
-
-- Note that $L(\theta)=\prod_{i=1}^n [f(t_i;\theta)]^{\delta_i}[S(t_i;\theta)]^{1-\delta_i}= \prod_{i=1}^n \lambda(t_i)^{\delta_i} S(t_i)$ is what we actually care about here.
+- Oobserve an event for $i$ ($\delta_i=1$), then $t_i\sim f$ and censoring did not occur prior $[f(t_i;\theta)[1-G(t_i;\phi)]]^{\delta_i}$
+- Observe censoring for $i$ ($\delta_i=1$), then $t_i\sim g$ and an event did not occur prior $[g(t_i;\phi)S(t_i;\theta)]^{1-\delta_i}$
+- But, we do not care about the censoring distribution, only the time to event distribution.
+- Partial likelihood 
+$$L(\theta)=\prod_{i=1}^n [f(t_i;\theta)]^{\delta_i}[S(t_i;\theta)]^{1-\delta_i}= \prod_{i=1}^n \lambda(t_i)^{\delta_i} S(t_i)$$ 
 
 ## Kaplan-Meier Estimator
 
-- Consider estimating $S(t) = P(T>t)$ from the sample ordered by $t_i$, $(t_{1}, \delta_{1}), (t_{2}, \delta_{2}), \dots, (t_{n}, \delta_{n})$ and let $t_{(1)}, t_{(2)}, \dots, t_{(J)}$ be the ordered event times, where $\delta_i=1$.
-- Because there are only $J$ points in time where events occur, we approximate $S(t)$ as a decreasing step function.
-- $S(t_{(j)}) = P(T > t_{(j)}) = P(T > t_{(j)} | T > t_{(j-1)}) P(T > t_{(j-1)})$ because for $t > s, P(T>t) = P(T>t, T>s) = P(T>t|T>s)P(T>s)$.
-- For $j = 1,\dots, J$, let $\pi_j = 1-P(T > t_{(j)} | T > t_{(j-1)})$ be the "instantaneous" probability of an event occurring at time $t_j$.
+- Consider estimating survival: $S(t) = P(T>t)$ from sample $(t_1, \delta_1),\dots, (t_n,\delta_n)$
+- Approximate $S(t)$ as a non-parametric decreasing step function
+  - $S(t)$ is proportion of sample that has not experienced an event at time $t$
+  - Problem: If $i$ censored prior to $t$, we cannot know if their event occurred before or after $t$
+- Order sample by event times $t_i$ where $\delta_i=1$: 
+$$t_{(1)}, t_{(2)}, \dots, t_{(J)}$$
+- There are only $J$ sample points in time where events occur
+- Recall conditional probability rule $P(A|B)=\frac{P(A,B)}{P(B)}$
+- Because $t_{(j)} > t_{(j-1)}$,
+$$S(t_{(j)}) = P(T > t_{(j)}) = P(T > t_{(j)}, T > t_{(j-1)}) = P(T > t_{(j)} | T > t_{(j-1)}) P(T > t_{(j-1)})$$
+- Repeating
+$$S(t_{(j)}) = P(T > t_{(j)} | T > t_{(j-1)}) P(T > t_{(j-1)} | T > t_{(j-2)}) P(T > t_{(j-2)})$$
+- For $j = 1,\dots, J$, the "instantaneous" probability of an event occurring at time $t_j$:
+$$\pi_j = 1-P\left(T > t_{(j)} | T > t_{(j-1)}\right)$$
 - Then 
 \[
 S(t_{(j)}) = (1-\pi_j)(1-\pi_{j-1}) \dots (1-\pi_2)(1-\pi_1).
 \]
-- Let $n_j = \#\{t_i \geq t_{(j)}\}$ be the number of participants who are still at risk (who haven't had an event or been censored) at time $t_{(j)}$.  Note that $n_j$ decreases as events occur or as they are censored.
-- Let $d_j = \#\{t_i=t_{(j)}, \delta_i=1\}$ be the number of events that occur at time $t_{(j)}$.
-- We can show that $\pi_j = \frac{d_j}{n_j}$ maximized the non-parametric likelihood.
+- Calculate $\pi_j$:
+  - Let $n_j = \#\{t_i \geq t_{(j)}\}$ be the number of participants who are still at risk (who haven't had an event or been censored) at time $t_{(j)}$
+  - Note: that $n_j$ decreases as events occur or as they are censored.
+  - Let $d_j = \#\{t_i=t_{(j)}, \delta_i=1\}$ be the number of events that occur at time $t_{(j)}$.
+  - Maximizes the non-parametric likelihood
+  $$\pi_j = \frac{d_j}{n_j}$$
 - So, we can approximate the survival function as
 \[
 \hat S(t) = \prod_{j=1}^J \left( 1-\frac{d_j}{n_j}\right)^{I(t_{(j)}\leq t)}.
@@ -605,6 +641,7 @@ S(t_{(j)}) = (1-\pi_j)(1-\pi_{j-1}) \dots (1-\pi_2)(1-\pi_1).
 \[
 \hat V[\hat S(t)] = \hat S(t)^2 \sum_{j: t_{(j)}\leq t} \frac{d_j}{n_j(n_j-d_j)}
 \]
+- With the variance, we can run statistical tests
 
 This [video](https://www.youtube.com/watch?v=NDgn72ynHcM) clearly illustrates how to calculate the KM survival function.
 
@@ -728,27 +765,36 @@ Note: I haven't used this package in a long time so I needed to look how to use 
 
 ## Cox proportional hazards model
 
-It is difficult to work with censored data using generalized linear models.
-Assuming that each individual hazard function is proportional to some common baseline hazard function makes the problem workable:
+- Difficult to work with censored data using generalized linear models
+- We can use use Poisson regression, how?
+- Assuming that each individual hazard function is proportional to some common baseline hazard function makes the problem workable:
 \[
-\lambda(t|X_i) = \lambda_0(t) \exp(\beta X_i)
+\lambda(t|x_i) = \lambda_0(t) \exp(\beta x_i)
 \]
-where $X_i$ is the covariate vector for participant $i$ and $\beta$ is the parameter vector to be estimated.
+where $X_i$ is the covariate vector for participant $i$ and $\beta$ is the parameter vector to be estimated
+- $\lambda_0(t)$ is the hazard function for $x=0$
+- $\exp(\beta x_i)$ explains proportional differences in hazards as $x_i$ changes as in parametric regression
+- Then the probability that individual $j$ experiences an event at $t_{(j)}$ given survival until $t_{(j)}$ is
+$$\lambda(t_{(j)}|x_{(j)})=\lambda_0(t_{(j)})\exp(x_{(j)}\beta)$$
+- The total probability within the sample of an event occurring at time $t_{(j)}$ given those who have survived until $t_{(j)}$ is 
+$$\sum_{k: t_k\geq t_{(j)}} \lambda(t_{(j)}|x_k) = \sum_{k: t_k\geq t_{(j)}} \lambda_0(t_{(j)})\exp(x_k\beta)$$
+- Then probability of an event occurring at $t_{(j)}$ conditioning on covariates $x_{(j)}$ (the likelihood) is
+$$L_j(\beta) = \frac{\lambda(t_{(j)}|x_{(j)})}{\sum_{k: t_k\geq t_{(j)}} \lambda(t_{(j)}|x_k)} = \frac{\lambda_0(t_{(j)})\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \lambda_0(t_{(j)})\exp(x_k\beta)}
+= \frac{\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \exp(x_k\beta)}$$
+- Notice that the baseline hazard function, $\lambda_0(t)$, cancels.  So, now we can use use an optimization technique to maximize this function
+- The joint likelihood for the sample is
+$$\tilde L(\beta) = \prod_{j=1}^J L_j(\beta) = \prod_{j=1}^J \frac{\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \exp(x_k\beta)}
+= \prod_{i=1}^n \left[\frac{\exp(x_i\beta)}{\sum_{\ell\in R(t_i)} \exp(x_\ell\beta)}\right]^{\delta_i}$$
 
-Assume $Y_i$ is the response variable.
-The likelihood for an observation is
-\[
-L_i(\beta) = \frac{\lambda(Y_i|X_i)}{\sum_{j:Y_j\geq Y_i} \lambda(Y_i|X_j)} = \frac{\lambda_0(Y_i)\exp(\beta X_i)}{\sum_{j:Y_j\geq Y_i} \lambda_0(Y_i) \exp(\beta X_j)} = \frac{\exp(\beta X_i)}{\sum_{j:Y_j\geq Y_i} \exp(\beta X_j)}.
-\]
-Notice that the baseline hazard function, $\lambda_0(t)$, cancels.  So, now we can use use an optimization technique to maximize this function.
+- log-likelihood:
+$$
+\tilde \ell(\beta) = \sum_{j=1}^J\left[ x_{(j)}\beta - \log \left(\sum_{k: t_k\geq t_{(j)}} \exp(x_k\beta) \right)\right]
+$$
+where $R(t) = \left\{\ell: t_\ell \geq t\right\}$
 
-The joint likelihood is $L(\beta) = \prod_{i: \delta_i=1} L_i(\beta)$ (over the observations with events occuring), with a log-likelihood of 
+- Maximize the likelihood with Newton-Raphson method
 
-\[
-\ell(\beta) = \sum_{i:\delta_i=1}\left(X_i\beta - \log \sum_{j:Y_j\geq Y_i} X_j\beta \right).
-\]
 
-To maximize the likelihood, we can use the Newton-Raphson method.
 
 
 ```r
@@ -853,9 +899,129 @@ summary(coxph(survobj~race+age+decile_score, data=ph))
 ## Score (logrank) test = 897.4  on 7 df,   p=<2e-16
 ```
 
+- Changing the baseline race
+
+
+```r
+ph$race = relevel(as.factor(ph$race), ref="Caucasian")
+summary(coxph(survobj~race, data=ph))
+```
+
+```
+## Call:
+## coxph(formula = survobj ~ race, data = ph)
+## 
+##   n= 10325, number of events= 2761 
+## 
+##                          coef exp(coef) se(coef)      z Pr(>|z|)    
+## raceAfrican-American  0.41881   1.52015  0.04302  9.735   <2e-16 ***
+## raceAsian            -0.50635   0.60269  0.35529 -1.425   0.1541    
+## raceHispanic         -0.08909   0.91477  0.07798 -1.142   0.2533    
+## raceNative American  -0.11800   0.88870  0.40975 -0.288   0.7734    
+## raceOther            -0.17090   0.84291  0.09850 -1.735   0.0827 .  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+##                      exp(coef) exp(-coef) lower .95 upper .95
+## raceAfrican-American    1.5202     0.6578    1.3972     1.654
+## raceAsian               0.6027     1.6592    0.3004     1.209
+## raceHispanic            0.9148     1.0932    0.7851     1.066
+## raceNative American     0.8887     1.1252    0.3981     1.984
+## raceOther               0.8429     1.1864    0.6949     1.022
+## 
+## Concordance= 0.56  (se = 0.005 )
+## Likelihood ratio test= 149.5  on 5 df,   p=<2e-16
+## Wald test            = 145.2  on 5 df,   p=<2e-16
+## Score (logrank) test = 148.1  on 5 df,   p=<2e-16
+```
+
+```r
+summary(coxph(survobj~race+decile_score, data=ph))
+```
+
+```
+## Call:
+## coxph(formula = survobj ~ race + decile_score, data = ph)
+## 
+##   n= 10325, number of events= 2761 
+## 
+##                           coef exp(coef)  se(coef)      z Pr(>|z|)    
+## raceAfrican-American  0.123647  1.131616  0.044612  2.772  0.00558 ** 
+## raceAsian            -0.331373  0.717937  0.355369 -0.932  0.35109    
+## raceHispanic         -0.043491  0.957441  0.078003 -0.558  0.57715    
+## raceNative American  -0.366303  0.693293  0.409889 -0.894  0.37150    
+## raceOther            -0.023428  0.976844  0.098711 -0.237  0.81239    
+## decile_score          0.179991  1.197207  0.006903 26.074  < 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+##                      exp(coef) exp(-coef) lower .95 upper .95
+## raceAfrican-American    1.1316     0.8837    1.0369     1.235
+## raceAsian               0.7179     1.3929    0.3578     1.441
+## raceHispanic            0.9574     1.0445    0.8217     1.116
+## raceNative American     0.6933     1.4424    0.3105     1.548
+## raceOther               0.9768     1.0237    0.8050     1.185
+## decile_score            1.1972     0.8353    1.1811     1.214
+## 
+## Concordance= 0.66  (se = 0.005 )
+## Likelihood ratio test= 818.3  on 6 df,   p=<2e-16
+## Wald test            = 833.8  on 6 df,   p=<2e-16
+## Score (logrank) test = 885.5  on 6 df,   p=<2e-16
+```
+
+```r
+summary(coxph(survobj~race+age+decile_score, data=ph))
+```
+
+```
+## Call:
+## coxph(formula = survobj ~ race + age + decile_score, data = ph)
+## 
+##   n= 10325, number of events= 2761 
+## 
+##                           coef exp(coef)  se(coef)      z Pr(>|z|)    
+## raceAfrican-American  0.109144  1.115323  0.044552  2.450   0.0143 *  
+## raceAsian            -0.353856  0.701976  0.355388 -0.996   0.3194    
+## raceHispanic         -0.065110  0.936965  0.078095 -0.834   0.4044    
+## raceNative American  -0.385283  0.680258  0.409893 -0.940   0.3472    
+## raceOther            -0.054587  0.946876  0.098846 -0.552   0.5808    
+## age                  -0.010236  0.989817  0.001859 -5.505  3.7e-08 ***
+## decile_score          0.167991  1.182926  0.007261 23.137  < 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+##                      exp(coef) exp(-coef) lower .95 upper .95
+## raceAfrican-American    1.1153     0.8966    1.0221    1.2171
+## raceAsian               0.7020     1.4245    0.3498    1.4087
+## raceHispanic            0.9370     1.0673    0.8040    1.0919
+## raceNative American     0.6803     1.4700    0.3046    1.5191
+## raceOther               0.9469     1.0561    0.7801    1.1493
+## age                     0.9898     1.0103    0.9862    0.9934
+## decile_score            1.1829     0.8454    1.1662    1.1999
+## 
+## Concordance= 0.661  (se = 0.005 )
+## Likelihood ratio test= 849.8  on 7 df,   p=<2e-16
+## Wald test            = 843  on 7 df,   p=<2e-16
+## Score (logrank) test = 897.4  on 7 df,   p=<2e-16
+```
+
+- Using our knowledge of regression with causation (Bayesian Networks above), how can we determine if the COMPAS algorithm is racially biased?
+
+**Time-Dependent Covariates**
+
+- In cases, covariates can change over time
+  - Here, zip code, or age can change over time
+  - This change may have an effect on the hazard function
+- Recall that $\lambda(t)$ is the instantaneous probability of an event at time $t$ given survival up to $t$
+- If one or more covariates change over time, $x(t)$, we can model hazard as
+$$\lambda(t|x(t)) = \lambda_0(t)\exp(\beta x(t))$$
+- The partial likelihood become
+$$\tilde L(\beta) = \prod_{i=1}^n \left[\frac{\exp(x_i(t_i)\beta)}{\sum_{\ell\in R(t_i)} \exp(x_\ell(t_i)\beta)}\right]^{\delta_i}$$
+
+These notes are based on chapter 9 of Lachin, John M. Biostatistical methods: the assessment of relative risks. Vol. 509. John Wiley & Sons, 2009.
+
 ## High Level Summary
 
-- Tools like Rmarkdown and Jupyter notebook make code more easily understood and reproducible.
 - Always explore the data before running regressions and other statistical tests.  Look at the raw data itself, try to understand variable names, variable distributions, missing data, etc
 - Collider bias occurs when conditioning (including as a covariate) on a variable that is influenced by the outcome variable and at least one other covariate.
 - Survival analysis tools, such as Kaplan-Meier curves and Cox PH regression, are helpful when follow times leading up to an event vary by observation, especially when censoring occurs.
