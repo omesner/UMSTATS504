@@ -218,7 +218,7 @@ In the regression above, several race indicator variables are significant.  But,
 ## Survival Analysis
 
 - Survival analysis is a set of statistical methods for modeling the time until an event occurs, especially when follow up is not complete for each observation.
-- Example: Testing a new terminal cancer treatment, participants are either given the standard or test treatment.  The goal is to prolong the patient's.  Each patient is followed until death from cancer.  During follow up some participants die from cancer but some drop out while others might die from something else.  Survival analysis allows us to use this data even though we do not have events for each participant.
+- Example: Testing a new terminal cancer treatment, participants are either given the standard or test treatment.  The goal is to prolong the patient's life.  Each patient is followed until death from cancer.  During follow up some participants die from cancer but some drop out while others might die from something else.  Survival analysis allows us to use this data even though we do not have events for each participant.
 
 **Set up**
 

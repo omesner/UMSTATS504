@@ -224,8 +224,8 @@ Is this the best way to present this information?
 ![XKCD causal comic](https://imgs.xkcd.com/comics/correlation.png)
 
 **Bayesian Network 1:**
-<!--html_preserve--><div id="htmlwidget-326b1081883438d8d7e5" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-326b1081883438d8d7e5">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-81b6b6d9cd1b1bac669b" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-81b6b6d9cd1b1bac669b">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 What would a regression model of `C ~ A + B` yield?
 
@@ -291,8 +291,8 @@ Does this coefficient and intercept estimate make sense?
 $C = 5B + 3 + \epsilon_B = 5(-2A - 25 + \epsilon_A) = -10A - 122 + 5\epsilon_A + \epsilon_B$
 
 **Bayesian Network 2:**
-<!--html_preserve--><div id="htmlwidget-b1ad7edefcb0dd04b8bd" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-b1ad7edefcb0dd04b8bd">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-31b5e76f3ee4cefd5e3d" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-31b5e76f3ee4cefd5e3d">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 
 ```r
@@ -328,8 +328,8 @@ summary(lm(C~A+B))
 What about this regression model: `C ~ A`?  Try it!
 
 **Bayesian Network 3:**
-<!--html_preserve--><div id="htmlwidget-a515b24ea7a73307eb68" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-a515b24ea7a73307eb68">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-0dddf02231d2d2cde2c3" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-0dddf02231d2d2cde2c3">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 
 ```r
@@ -422,8 +422,8 @@ summary(lm(A~B))
 - $A$ and $B$ are independent; that is, knowledge of $B$ give no information on the value of $A$. But, additional knowledge of $C$ does give information about the value of $A$.
 
 **Bayesian Network 4**
-<!--html_preserve--><div id="htmlwidget-b77aa1ae2a8527125bfc" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-b77aa1ae2a8527125bfc">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-32ceb9c658f7070bf87d" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-32ceb9c658f7070bf87d">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 
 ```r
@@ -485,16 +485,16 @@ summary(lm(C~A))
 ## COMPAS and possible collider bias
 
 COMPAS uses [questionnaire](https://www.documentcloud.org/documents/2702103-Sample-Risk-Assessment-COMPAS-CORE.html) responses (Q in the diagram) to predict recidivism.  
-<!--html_preserve--><div id="htmlwidget-3e0ec68a90e438412ac7" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-3e0ec68a90e438412ac7">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; Race -> Recidivism}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-b025b35a1f1802fbb7fb" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-b025b35a1f1802fbb7fb">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; Race -> Recidivism}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Because COMPAS is used in sentencing, it may actually impact recidivism as well.
-<!--html_preserve--><div id="htmlwidget-d3a2af428d1d90cc10cc" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-d3a2af428d1d90cc10cc">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-2d80fb9ff157f2d17e41" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-2d80fb9ff157f2d17e41">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 One way to quantify racial bias in COMPAS would be to isolate the link between race and COMPAS that is not associated with recidivism.  But, it is not clear how to untangle this from potential collider bias.
-<!--html_preserve--><div id="htmlwidget-ff031734e906a9340ee0" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-ff031734e906a9340ee0">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism; Race-> COMPAS}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-8dbe0a2abdde446f27ea" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-8dbe0a2abdde446f27ea">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism; Race-> COMPAS}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 If we used `decile_score ~ is_recid + race` as a model to quantify bias, it seems very likely that there will be collider bias.
 
@@ -534,7 +534,7 @@ In the regression above, several race indicator variables are significant.  But,
 ## Survival Analysis
 
 - Survival analysis is a set of statistical methods for modeling the time until an event occurs, especially when follow up is not complete for each observation.
-- Example: Testing a new terminal cancer treatment, participants are either given the standard or test treatment.  The goal is to prolong the patient's.  Each patient is followed until death from cancer.  During follow up some participants die from cancer but some drop out while others might die from something else.  Survival analysis allows us to use this data even though we do not have events for each participant.
+- Example: Testing a new terminal cancer treatment, participants are either given the standard or test treatment.  The goal is to prolong the patient's life.  Each patient is followed until death from cancer.  During follow up some participants die from cancer but some drop out while others might die from something else.  Survival analysis allows us to use this data even though we do not have events for each participant.
 
 **Set up**
 
