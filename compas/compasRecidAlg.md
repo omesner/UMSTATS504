@@ -224,8 +224,8 @@ Is this the best way to present this information?
 ![XKCD causal comic](https://imgs.xkcd.com/comics/correlation.png)
 
 **Bayesian Network 1:**
-<!--html_preserve--><div id="htmlwidget-81b6b6d9cd1b1bac669b" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-81b6b6d9cd1b1bac669b">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-5141290b92a55241b80e" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-5141290b92a55241b80e">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 What would a regression model of `C ~ A + B` yield?
 
@@ -291,8 +291,8 @@ Does this coefficient and intercept estimate make sense?
 $C = 5B + 3 + \epsilon_B = 5(-2A - 25 + \epsilon_A) = -10A - 122 + 5\epsilon_A + \epsilon_B$
 
 **Bayesian Network 2:**
-<!--html_preserve--><div id="htmlwidget-31b5e76f3ee4cefd5e3d" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-31b5e76f3ee4cefd5e3d">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-8c2abba890a907951290" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-8c2abba890a907951290">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 
 ```r
@@ -328,8 +328,8 @@ summary(lm(C~A+B))
 What about this regression model: `C ~ A`?  Try it!
 
 **Bayesian Network 3:**
-<!--html_preserve--><div id="htmlwidget-0dddf02231d2d2cde2c3" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-0dddf02231d2d2cde2c3">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-1a600aea63dca24e80e1" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1a600aea63dca24e80e1">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 
 ```r
@@ -422,8 +422,8 @@ summary(lm(A~B))
 - $A$ and $B$ are independent; that is, knowledge of $B$ give no information on the value of $A$. But, additional knowledge of $C$ does give information about the value of $A$.
 
 **Bayesian Network 4**
-<!--html_preserve--><div id="htmlwidget-32ceb9c658f7070bf87d" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-32ceb9c658f7070bf87d">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-d4170690120edcf216be" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-d4170690120edcf216be">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 
 ```r
@@ -485,16 +485,16 @@ summary(lm(C~A))
 ## COMPAS and possible collider bias
 
 COMPAS uses [questionnaire](https://www.documentcloud.org/documents/2702103-Sample-Risk-Assessment-COMPAS-CORE.html) responses (Q in the diagram) to predict recidivism.  
-<!--html_preserve--><div id="htmlwidget-b025b35a1f1802fbb7fb" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-b025b35a1f1802fbb7fb">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; Race -> Recidivism}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-45eeedc3c00c05317e82" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-45eeedc3c00c05317e82">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; Race -> Recidivism}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Because COMPAS is used in sentencing, it may actually impact recidivism as well.
-<!--html_preserve--><div id="htmlwidget-2d80fb9ff157f2d17e41" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-2d80fb9ff157f2d17e41">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-6699e600f642c6bd1b0d" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-6699e600f642c6bd1b0d">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 One way to quantify racial bias in COMPAS would be to isolate the link between race and COMPAS that is not associated with recidivism.  But, it is not clear how to untangle this from potential collider bias.
-<!--html_preserve--><div id="htmlwidget-8dbe0a2abdde446f27ea" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-8dbe0a2abdde446f27ea">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism; Race-> COMPAS}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-3cec5cc6245402809008" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-3cec5cc6245402809008">{"x":{"diagram":"digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism; Race-> COMPAS}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 If we used `decile_score ~ is_recid + race` as a model to quantify bias, it seems very likely that there will be collider bias.
 
@@ -779,8 +779,12 @@ $$\lambda(t_{(j)}|x_{(j)})=\lambda_0(t_{(j)})\exp(x_{(j)}\beta)$$
 - The total probability within the sample of an event occurring at time $t_{(j)}$ given those who have survived until $t_{(j)}$ is 
 $$\sum_{k: t_k\geq t_{(j)}} \lambda(t_{(j)}|x_k) = \sum_{k: t_k\geq t_{(j)}} \lambda_0(t_{(j)})\exp(x_k\beta)$$
 - Then probability of an event occurring at $t_{(j)}$ conditioning on covariates $x_{(j)}$ (the likelihood) is
-$$L_j(\beta) = \frac{\lambda(t_{(j)}|x_{(j)})}{\sum_{k: t_k\geq t_{(j)}} \lambda(t_{(j)}|x_k)} = \frac{\lambda_0(t_{(j)})\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \lambda_0(t_{(j)})\exp(x_k\beta)}
-= \frac{\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \exp(x_k\beta)}$$
+$$\begin{align*}
+L_j(\beta) &= P[(j)\text{ fails}|\text{1 failure from those at risk at $t_{(j)}$}]
+= \frac{P[\text{$(j)$ fails}| \text{still at risk}]}{\sum_{k: t_k\geq t_{(j)}}P(\text{$k$ fails}| \text{still at risk})} \\
+&= \frac{\lambda(t_{(j)}|x_{(j)})}{\sum_{k: t_k\geq t_{(j)}} \lambda(t_{(j)}|x_k)} = \frac{\lambda_0(t_{(j)})\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \lambda_0(t_{(j)})\exp(x_k\beta)}
+= \frac{\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \exp(x_k\beta)}
+\end{align*}$$
 - Notice that the baseline hazard function, $\lambda_0(t)$, cancels.  So, now we can use use an optimization technique to maximize this function
 - The joint likelihood for the sample is
 $$\tilde L(\beta) = \prod_{j=1}^J L_j(\beta) = \prod_{j=1}^J \frac{\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \exp(x_k\beta)}
@@ -1005,6 +1009,24 @@ summary(coxph(survobj~race+age+decile_score, data=ph))
 ## Score (logrank) test = 897.4  on 7 df,   p=<2e-16
 ```
 
+- Testing proportional hazards assumption
+- Null Hypothesis: Proportional hazards
+- Should consider transformation (next lecture)
+
+
+```r
+test.ph <- cox.zph(coxph(survobj~race+age+decile_score, data=ph))
+test.ph
+```
+
+```
+##              chisq df      p
+## race          6.68  5 0.2453
+## age           4.59  1 0.0321
+## decile_score  2.93  1 0.0869
+## GLOBAL       18.58  7 0.0096
+```
+
 - Using our knowledge of regression with causation (Bayesian Networks above), how can we determine if the COMPAS algorithm is racially biased?
 
 **Time-Dependent Covariates**
@@ -1018,7 +1040,63 @@ $$\lambda(t|x(t)) = \lambda_0(t)\exp(\beta x(t))$$
 - The partial likelihood become
 $$\tilde L(\beta) = \prod_{i=1}^n \left[\frac{\exp(x_i(t_i)\beta)}{\sum_{\ell\in R(t_i)} \exp(x_\ell(t_i)\beta)}\right]^{\delta_i}$$
 
+**Stratified Models**
+
+- If a sample of $n$ observations are thought to have $S$ mutually exclusive baseline hazards, we can choose to use a stratified model
+$$\lambda_h(t|x) = \lambda_{0h}(t)\exp(x\beta) \text{ for } h=1,\dots,S$$
+- Example: Want to assess effect of age and weight only on risk of death, we may want to stratify by gender
+- If covariates are assumed to be different in different strata, we can estimate strata-specific parameters, $\beta_h$, for each strata
+$$\lambda_h(t|x) = \lambda_{0h}(t)\exp(x\beta_h) \text{ for } h=1,\dots,S$$
+- Partial likelihood:
+$$\tilde L(\beta) = \prod_{h=1}^S \prod_{i=1}^{n_h} \left[\frac{\exp(x_{i(h)}\beta_h)}{\sum_{\ell\in R_h(t_{i(h)})} \exp(x_{\ell(h)\beta_h}))}\right]$$
+where $n_h$ is the number in each strata, $i(h)$ is the $i$th observation in the $h$th stratam, $R_h$ is the stratam specific risk set
+
+**Frailty model**
+
+- Some data will have associations among the observations themselves
+- Example: COMPAS data could have multiple arrests, their associated COMPAS score, and their own follow up
+- It is reasonable to assume that past scores, and arrests may provide information (association) on future data
+- If there are associations among the observations in the data, the parameter point estimates will be accurate
+- But, standard error will not be correct, so any inference (p-values, confidence intervals) will not be valid
+- Solution: modify the information sandwich for GLMs with associated observations to Cox PH
+- This provides a consistent estimator for the covariance matrix
+- Note: so far we have not discussed sandwich estimator
+
 These notes are based on chapter 9 of Lachin, John M. Biostatistical methods: the assessment of relative risks. Vol. 509. John Wiley & Sons, 2009.
+
+### Consulting Case Study: Treating Syphilis in People living with HIV
+
+- The typically, the first line treatment for syphilis is penicillin
+- But, people living with HIV are sometimes thought to be immunocompromised
+- Because of this, it was common for physicians to administer two or more standard doses to treat syphilis for someone living with HIV
+- US treatment guidelines in the US recommended one standard dose regardless of HIV status
+- But, there was disagreement in the medical community on this guideline
+- This type of disagreement (equipoise) frequently leads to research
+
+**Background:** Treatment guidelines recommend the use of a single dose of benzathine penicillin G (BPG) for treating early syphilis in human immunodeficiency virus (HIV)-infected persons. However, data supporting this rec- ommendation are limited. We examined the efficacy of single-dose BPG in the US Military HIV Natural History Study.
+
+**Methods:** Subjects were included if they met serologic criteria for syphilis (ie, a positive nontreponemal test [NTr] confirmed by treponemal testing). Response to treatment was assessed at 13 months and was defined by a ≥4-fold decline in NTr titer. Multivariate Cox proportional hazard regression models were utilized to examine factors associated with treatment response.
+
+**Results:** Three hundred fifty subjects (99% male) contributed 478 cases. Three hundred ninety-three cases were treated exclusively with BPG (141 with 1 dose of BPG). Treatment response was the same among those receiving 1 or >1 dose of BPG (92%). In a multivariate analysis, older age (hazard ratio [HR], 0.82 per 10-year increase; 95% con- fidence interval [CI], .73–.93) was associated with delayed response to treatment. Higher pretreatment titers (refer- ence NTr titer <1:64; HR, 1.94 [95% CI, 1.58–2.39]) and CD4 counts (HR, 1.07 for every 100-cell increase [95% CI, 1.01–1.12]) were associated with a faster response to treatment. Response was not affected by the number of BPG doses received (reference, 1 dose of BPG; HR, 1.11 [95% CI, .89–1.4]).
+
+**Conclusion:** In this cohort, additional BPG doses did not affect treatment response. Our data support the current recommendations for the use of a single dose of BPG to treat HIV-infected persons with early syphilis.
+
+[Ganesan, Anuradha, Octavio Mesner, Jason F. Okulicz, Thomas O'Bryan, Robert G. Deiss, Tahaniyat Lalani, Timothy J. Whitman, Amy C. Weintrob, Grace Macalino, and Brian K. Agan. "A single dose of benzathine penicillin G is as effective as multiple doses of benzathine penicillin G for the treatment of HIV-infected persons with early syphilis." Clinical Infectious Diseases 60, no. 4 (2015): 653-660.](https://watermark.silverchair.com/ciu888.pdf?token=AQECAHi208BE49Ooan9kkhW_Ercy7Dm3ZL_9Cf3qfKAc485ysgAAApwwggKYBgkqhkiG9w0BBwagggKJMIIChQIBADCCAn4GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMwIEGpMypn5jNE1PUAgEQgIICT7SGmranIjoV1R-6BesI-zkW5PjaLFd6_Rlbp4FSmXlYnAPBeLUBPrnK02nuRQvdbncvOv8rmyLk1yW-CcdJprxha4Gkpc0vNRRCDQtAEj9LztZR4TuRwzRyhkYV80vnlvatCSODR3v2FyvyhCz4TmLhMwREDnw02GKGKYL0UVgxmJv670Tbh6bR-a4VnKnj6ij_c12ta6NjJD5Q3uLBEWbA3NXbHor0toSznib3o16M_nZpL2C8iyg6riFla_cyPNgrcpBwMyn9wRA5Dr9WEcoumOgrmV7OSnQyrarl_2akpizOiWPA2Aou84ELMPrDZA5LfqDYKyo21Dwx0ghg1OVQ0ooM6o_qXRlNT3fcPIAH5MNLgdsMexr5ResG3egsjQV6rvFJ0sUlKTQ1nxd7y703K_ADWFB-nSpuNiaCevH1zgTsOjqFN45BW_ULb6zCGCo6Hk2OtfJpsVtgM4cob-VNgPy9QFxHUOH7EEUk-CpO5S6U0fdUmYSAC6z_G3CXsBE_y-Y_J70-wee9eZOvk4j8mUsa8dtH0ksh57loH6K0Hpo-8nrERIKgUFaMIOH39dNqE5DS2KOBYOuCjxfDrgoMWS3oBdSsI6PhsSN73NJPahctpAPRb8X04Ku_Z1h-GFvir2sgerKrFfLlptA9c82b-UadNdTmuB2xMkOnv8xnya_jwW0GLuDn0A3JPgEy78JhrLgKaFHj8k15aX0m7-feAkNFdnQgRPgL5-7ftwzvTB4II5ygV5svEuQg05Zh4TDn8dQM0xgml0qzSBOXGw)
+
+Look for in paper:
+
+- Data inclusion criteria
+- Baseline table for individuals
+- Syphilis episodes table
+- KM curves
+- Cox PH Model
+
+[Response Letter](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.864.7969&rep=rep1&type=pdf)
+
+- Because of the disagreement, some clinicians wrote a negative response to our study
+- The response focused mainly on the methods
+
+[Our Response](https://academic.oup.com/cid/article/60/9/1444/404706)
 
 ## High Level Summary
 
