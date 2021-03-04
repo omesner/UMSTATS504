@@ -1,0 +1,15 @@
+digraph {
+    A [label="X1", shape=rectangle]
+    B [label="X2", shape=rectangle]
+    C [label="X2", shape=rectangle]
+    D [label="Y=17"]
+    E [label="Y=-42"]
+    F [label="Y=0"]
+    G [label="Y=5"]
+    A -> B [ label="X1=0" ]
+    A -> C [ label="X1=1" ]
+    B -> D [ label="X2=0" ]
+    B -> E [ label="X2=1" ]
+    C -> F [ label="X2=0" ]
+    C -> G [ label="X2=1" ]
+}
