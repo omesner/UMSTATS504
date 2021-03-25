@@ -1,7 +1,6 @@
 ---
 title: "Causal Inference"
 author: "Octavio Mesner"
-date: "10/12/2020"
 output: html_document
 ---
 
@@ -181,6 +180,54 @@ digraph G {
 }
 ```
 
+## Prediction, GLMs, and Causal Inference
+
+- So far in this topic, we have focused on inference but not prediction
+- The goals are usually for GLMs and causal inference models are similar in practice:
+  - control for variables to approximate the causal influence of variables of interest
+  - if model assumptions are satisfied (linearity, no latent confounding, etc), standard GLMs will give causal parameter estimates
+  - in this case, causal inference models *should* give similar parameter estimates to GLM estimates
+  - In both cases, we should only control for variables that can *cause* our outcome
+    - That is, we should not control for variables that are caused by the outcome (this can lead to collider bias)
+    - Some of the time, we will not know which variables are caused by the outcome, a general rule is to not control for variable that are taken or observed after the outcome occurs
+- If we do not control for *all* confounding variables, any association between $X$ and $Y$ present through the confounder pathway (red in image below) will likely be included in the parameter quantified by a model
+- In *any* inference, we want to quantify the true causal parameter
+  - Causal inference models make this easier by relaxing some assumptions
+    
+```{dot regressionConf, out.width = "40%", echo=FALSE}
+digraph G {
+  Confounders -> X [color="red"];
+  Confounders -> Y [color="red"];
+  X -> Y [ label = "True Causal Parameter", constraint=false]
+}
+```
+    
+- Causal inference
+  - Assumption of linear relationships within the data are likely not true (or at least hard to verify)
+  - Causal inference models make it possible to control for confounding variables in a non-linear setting
+  - Goal: Estimate a causal parameter of interest (when there are not linear relationships)
+    - Causal parameters in our simulations are the parameters in the Bayesian network (DAG)
+    - Causal parameter interpretation: if we were to change $X$, we should be able to use the causal parameter to accurately predict $Y$
+    - Recall: when we did not control for confounding variables, the parameter estimates did not match the DAG
+  - Assumptions: no latent confounding (we have all confounding variables included in the data)
+- Prediction
+  - use all useful information in data to make a prediction
+  - we can use causes and effects
+  - we also want to use colliders because they also provide information
+  - General rule: use [Markov Blanket](https://en.wikipedia.org/wiki/Markov_blanket)
+  - For prediction, all variables in Markov blanket are useful for prediction, but not causation
+    - If we changes causes, we should see changes in outcome
+    - If we change variables in collider, we should not
+  - Note: Prediction methods try to find all variables in Markov blanket
+    - This will depend on signal/noise ratio and model assumptions
+  - Given Markov Blanket, all other variables are conditionally independent from outcome
+  - If we *know* causal Bayesian network underlying a dataset, we should include all variables in Markov blanket and no others
+    - Including variables not in Markov Blanket will be noise variables (given the Markov Blanket)
+  
+![Markov Blanket Image from Wikipedia](https://upload.wikimedia.org/wikipedia/commons/e/eb/Diagram_of_a_Markov_blanket.svg)
+
+In the image above, the Markov Blanket of $A$ is the set of white variable within the large circle
+
 ## Graphical Causal Models and D-separation
 
 - Researchers frequently use *directed acyclic graphs* (DAG) to visualize causal relationships between variables in a dataset
@@ -244,6 +291,15 @@ digraph G{
   - Other Chain: $A \leftarrow B \leftarrow C$
   - Fork: $A \leftarrow B \rightarrow C$
   - Collider: $A \rightarrow B \leftarrow C$
+
+
+| Structure | Path type | $A,C$ independent/dependent?  | $A,C$ conditionally independent/dependent given $B$ |
+| --- | --- | --- | --- |
+| Chain | $A \rightarrow B \rightarrow C$  | $A\not\perp C$ | $A\perp C|B$ |
+| Other Chain | $A \leftarrow B \leftarrow C$ | $A\not\perp C$  | $A\perp C|B$ |
+| Fork (Confounder) | $A \leftarrow B \rightarrow C$ |  $A\not\perp C$ |  $A\perp C|B$ |
+| Collider | $A \rightarrow B \leftarrow C$ | $A\perp C$ | $A\not\perp C|B$ |
+
   
 - Questions:
   1. Are A and B associated?
@@ -503,9 +559,10 @@ ggplot(lalonde, aes(x=re78, fill=random)) +  geom_density(alpha=0.25)
 
 ## Estimating Weights
 
-- There is no standard method for model selection in the context of estimating propensity scores for IPTW for multiple treatments
+- There is no one standard method for model selection in the context of estimating propensity scores for IPTW for multiple treatments
 - It's common to use non-parametric methods for estimating probabilities
 - Note that in this context, we care more about the prediction value than the interpretation of parameter estimates
+- Let's compare logistic regression and generalized boosted models (GBM) to estimate observation weights
 
 **Logistic Regression**
 ```{r logisticPropensity}
