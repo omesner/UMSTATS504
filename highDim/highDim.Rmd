@@ -1,7 +1,6 @@
 ---
 title: "High Dimensional Analysis"
 author: "Octavio Mesner"
-date: "11/9/2020"
 output: html_document
 ---
 
@@ -153,9 +152,13 @@ which(null_pvals<=bcorrection)
 
 - Notice that test may be associated (knowing one p-value may give information about others)
 - Bonferroni still works here
-- In many cases, Bonferroni is too strict (it rejects too many tests)
 - How could we construct a global null hypothesis from Bonferroni?
   - If at least one $p_i \leq \frac{\alpha}{m}$, then we can reject global null
+- Bonferroni is conservative
+  - Types of error: false positives (type I error) and false negatives (type II error)
+  - Bonferroni is very good at limiting false positives but not limiting false negatives
+  - Power = 1-P(type II error), is the probability of rejecting the null hypothesis when the alternative hypothesis is true
+  - Bonferroni may not always be a powerful test
 
 **Fisher Combination**
 
@@ -176,7 +179,7 @@ T = \sum_{i=1}^m -2 \log(p_i) \sim \chi^2(2m)
 - Simes test statistic
 \[ p_{\text{Simes}} = \min_{i\in [m]} \left\{ \frac{m p_{(i)}}{i} \right\}\]
 - Reject global null if $p_{\text{simes}} \leq \alpha$
-  - Equivalent: Reject global null if any $p_{(i)} \leq \frac{i\alpha}{n}$
+  - Equivalent: Reject global null if any $p_{(i)} \leq \frac{i\alpha}{m}$
 - Proof is a little more complicated
   - Need to show that $p_{\text{Simes}} \sim \text{Unif}(0,1)$
   - Uses order statistics properties to show this
@@ -276,7 +279,7 @@ See [p.adjust documentation](https://stat.ethz.ch/R-manual/R-devel/library/stats
 
 - Family-wise error and false discovery
 - Only Bonferroni and Benjamini-Hochberg indicate which null hypotheses to reject, all others are global null
-- Many applied papers do not usre multiple testing procedures but should
+- Many applied papers do not use multiple testing procedures but should
 - Prediction, causation, and dependence
   - Smoking and cancer can both be used to predict death, but should we use both?
 
@@ -483,6 +486,40 @@ glmnet_plot(l5_fit, num_active_vars)
 - $L_2$ penalty
   - number of selected variables not bounded by $n$
   - stabilizes $L_1$ regularization path
+  
+### Penalized Regression as Bayesian Method
+
+- Bayes' Theorem $$P(H|E)=\frac{P(E|H) P(H)}{P(E)}$$ where $P(E)\neq 0$
+- Note: Bayes' theorem is also frequently used outside of Bayesian methods
+- In Bayesian inference, the goal is to estimate $P(H|E)$ by estimating $P(E|H)$ and $P(H)$
+- $P(H|E)$, the *posterior probability*, is the probability $H$ given evidence (data) $E$
+- $P(H)$, the *prior probability*, is the probability of $H$ before evidence (data) is observed
+- $P(E|H)$ is the *likelihood*
+- $P(E)$ is the marginal likelihood but is frequently used to make sure that the probability sums to one
+- In Bayesian inference, we want to estimate the parameter, $\theta$, to be a random variable, with a prior distribution, $\pi(\theta)$
+- We use data, $x$, to improve our estimate of $\theta$, $$\pi(\theta|x) = \frac{f(x|\theta)\pi(\theta)}{m(x)}$$ where $m(x)=\int f(x|\theta)\pi(\theta)d\theta$
+- Example:
+Let $X_1,\dots,X_n\sim\text{Bernoulli}(p)$ and $Y=\sum_i X_i$ (binomial random variable).
+Goal: Estimate $p$.
+  - Assume $p\sim\text{Beta}(\alpha,\beta)$ is a prior distribution for $p$.
+  That is, $$\pi(p) = \frac{p^{\alpha-1}(1-p)^{\beta-1}}{B(\alpha,\beta)}$$ where $B$ is the beta function.
+  Then $$\pi(p|Y) \propto \underbrace{\binom{n}{Y}p^Y(1-p)^{n-Y}}_{\text{likelihood}} \times     \underbrace{\frac{p^{\alpha-1}(1-p)^{\beta-1}}{B(\alpha,\beta)}}_{\text{prior}} \propto p^{Y+\alpha-1}(1-p)^{n-Y+\beta-1}$$
+  Then $$p|Y\sim\text{Beta}(Y+\alpha,n-Y+\beta)$$ so that $$\hat p = \frac{Y+\alpha}{\alpha+\beta+n}$$ using the mean of a [Beta distributed](https://en.wikipedia.org/wiki/Beta_distribution) random variable
+- Penalized regression was introduced as a frequentist method in 1996
+- [Park and Casella](https://people.eecs.berkeley.edu/~jordan/courses/260-spring09/other-readings/park-casella.pdf) showed that it was equivalent to a Bayesian paradigm where parameters have a mean-zero Gaussian prior (ridge regression) or a meanzero-Laplace prior (lasso)
+- Lasso as an optimization: $$\beta_{\text{Lasso}} = \arg\min_\beta \|y-X\beta\|^2 + \lambda\sum_{j=1}^p |\beta_j|$$
+- Lasso as Bayesian: $y\sim\text{Gaussian}(X\beta, \sigma^2I_n)$ with prior, $\beta_j\sim \frac{\lambda}{2\sigma}e^{-\lambda|\beta_j|/\sigma}$ (Laplace distribution)
+- Ridge as optimization: $$\beta_{\text{Ridge}} = \arg\min_\beta \|y-X\beta\|^2 + \lambda\sum_{j=1}^p \beta_j^2$$
+- Ridge as Bayesian: $y\sim\text{Gaussian}(X\beta,\sigma^2I_n)$ with prior, $\beta_j\sim \text{Gaussian}(0, \lambda^{-1})$ (Gaussian distribution)
+$$
+\begin{align}
+\text{Posterior Distribution}
+&=\underbrace{\prod_{i=1}^n \text{Gaussian}(y_n|X\beta, \sigma^2I_n)}_{\text{likelihood}} \times \underbrace{\text{Gaussian}(\beta|0, \lambda^{-1}I_p)}_{\text{prior}}\\
+&\propto \exp\left(-\sum_{i=1}^n \frac{(y_i-X_i\beta)^2}{\sigma}\right) \times \exp\left(-\lambda\sum_{j=1}^p \beta_j^2\right) \\
+&= \exp\left(-\sum_{i=1}^n \frac{(y_i-X_i\beta)^2}{\sigma} - \lambda\sum_{j=1}^p \beta_j^2\right) \sim \text{Gaussian}
+\end{align}
+$$
+- Using standard methods to optimize this over $\beta$, we get a similar result to $\beta_\text{Ridge}$ ($\lambda$ must be scaled to accomodate $\sigma$)
 
 ### Overfitting and Model Validation
 

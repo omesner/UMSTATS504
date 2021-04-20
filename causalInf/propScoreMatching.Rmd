@@ -451,7 +451,7 @@ ggplot(lalonde, aes(x=re75, fill=treat)) +  geom_density(alpha=0.25)
   - $Y_i^1 = 1$ if $i$ takes vitamin C and stays healthy
   - $Y_i^1 = 0$ if $i$ takes vitamin C and gets sick
    - $Y_i^0 = 1$ if $i$ does not take vitamin C and stays healthy
-  - $Y_i^1 = 0$ if $i$ does not take vitamin C and gets sick
+  - $Y_i^0 = 0$ if $i$ does not take vitamin C and gets sick
 - The causal effect for observation $i$ is
 \[Y_i^1 - Y_i^0\]
 - Unfortunately, it's not possible to any individual's with and without treatment
@@ -537,6 +537,7 @@ ggplot(lalonde, aes(x=re78, fill=random)) +  geom_density(alpha=0.25)
   - For comparison, we want the treatment and placebo populations to be generated from the same distribution
   - This breaks any association between confounders and treatment
 - IPTW uses (possible) confounders to up- or down-weight observations depending on their probability of  receiving treatment
+  - IPTW are sometimes called propensity scores (PS)
   - These are called propensity scores - they indicate propensity for an observation to be in the the treatment group
   - IPTW makes the populations look similar for the considered covariates
   - Side note: Sometimes people are matched on covariates.  What is a possible draw back of matching?  What about many covariates
@@ -551,11 +552,20 @@ ggplot(lalonde, aes(x=re78, fill=random)) +  geom_density(alpha=0.25)
   \[0 < P(A=1|C=x_i) < 1\]
   2.  No unknown confounders: $A \perp Y^t | X$ for $t=0,1$
   
-- IPW: For each observation, $i$, the associated weight is
-\[w_i = \frac{1}{P(A=1|C=x_i)} = \frac{1}{P(i \text{ gets treatment})}\]
+- IPW: For each observation, $i$, let
+$$p_i = P(A=1|C=x_i) = P(i \text{ gets treatment}|x_i)$$
+
+the associated weight is
+\[w_i = \begin{cases}
+\frac{1}{p_i} & \text{when }A=1 \\
+\frac{1}{1-p_i} & \text{when }A=0
+\end{cases}\]
 
 - Propensity score Theorem
   \[(Y^0,Y^1) \perp A | X \Rightarrow (Y^0, Y^1) \perp A | w(X)\]
+- Note: This is saying that getting treatment or not is independent of what the response would have been in a counterfactual setting
+- Once the weights are estimates, ATE for a binary treatment is estimated as
+$$\widehat{\text{ATE}} = \frac{\sum_{i=1}^n A_iY_iw_i}{\sum_{i=1}^n A_iw_i} -\frac{\sum_{i=1}^n (1-A_i)Y_iw_i}{\sum_{i=1}^n (1-A_i)w_i}$$
 
 ## Estimating Weights
 
@@ -582,9 +592,48 @@ where $\bar X_{kt} = \sum_{i=1}^n I(A=t) X_{ki} w_i / \sum_{i=1}^n I(A=t) w_i$
 
 **Boosting**
 
-![Boosting Depication](https://udacity-reviews-uploads.s3.us-west-2.amazonaws.com/_attachments/19273/1524688880/boosting_final.png)
-[Source](https://udacity-reviews-uploads.s3.us-west-2.amazonaws.com/_attachments/19273/1524688880/boosting_final.png)
-[Youtube video on AdaBoost](https://www.youtube.com/watch?v=-DUxtdeCiB4)
+- A problem with logistic regression for estimating weights is that can be challenging to get a good model fit
+- Boosting makes this a lot easier and automatic
+- We already talked about AdaBoost and a little about general boosting
+- For a reference, in AdaBoost
+  - each lazy learner is fitted to the data with weights that depend on the last model's performance
+  - all of the lazy learners are scored depending on their performance
+- For general boosting
+  - Observations are *not* weighted
+  - We use learners (models) like regression or trees that are more complex than lazy learner
+  - Similar to AdaBoost, we must choose the number of sequential learner to use, $M$
+  - Each learner tries to predict the *error* of the previous model
+  - Error: in the literature, the error is the negative gradient of the loss function with respect to the model evaluated at an observation: \[-\frac{\partial L(y_i,f(x_i))}{\partial f(x_i)}\]
+  - For a continuous outcomes, this is $y_i-f(x_i)$ for continuous outcomes where $f$ is a continuous learner
+  - For a binary outcomes, this is $I(y_i=1)-p(x_i)$ where $p$ is a learner like logistic regression model or decision tree
+  - For categorical outcomes, this is $I(y_i=\text{Category }k)-p_k(x_i)$ where $p_k$ is models the probability of category $k$
+  - Learning rate: to avoid over fitting, we reduce the contribution of each learner by $0<\nu<1$
+  - Trees are the most common learner to use for boosting, usually with between 8 and 32 terminal leaves
+  
+  **Gradient Tree Boosting Algorithm from ESL**
+  
+1. Initialize $f_0(x)=\arg\min_\gamma \sum_{i=1}^n L(y_i,\gamma)$
+2. For $m=1$ to $M$:
+    1. For $i=1,\dots,n$ compute the error $$r_{im}=-\left[\frac{\partial L(y_i,f(x_i))}{\partial f(x_i)}\right]_{f=f_{m-1}}$$
+    2. Fit a regression tree to the errors, $r_{im}$ with terminal regions $R_{jm}$ where $j=1,\dots, J_m$
+    3. For $j=1,\dots, J_m$ compute $$\gamma_{jm}=\arg\min_\gamma \sum_{x_i\in R_{jm}} L(y_i,f_{m-1}(x_i)+\gamma)$$
+    4. Update $f_m(x)=f_{m-1}(x)+\nu\sum_{j=1}^{J_m} \gamma_{jm}I(x\in R_{jm})$
+3. Output $\hat f(x)=f_M(x)$
+
+**Generalized Boosting for Propensity Scores**
+
+- For causal inference, we want to weight the observation to make the treatment and control groups look as if they were randomized
+- Using inverse probabilities from boosting model, we want to use as many trees as we need to achieve balance in the covariates
+- Ideally, we want the distributions of each covariate in the treatment and control groups to be similar (mean, variance, skew, shape, etc)
+- Clearly this is rarely possible, so we might restrict balance to mean and/or standard deviation for example
+- Assessing covariate balance with *standardize bias* estimation
+\[SB_k = \frac{|\bar X_{k1} - \bar X_{k0}|}{\hat \sigma_k}\]
+- Generally, standardized mean differences of less than 0.20are considered small, 0.40 are considered moderate, and 0.60 are considered large
+- This cutoff can change within fields and between investigator
+- McCaffery et al: $SB>0.2$ is problematic
+- Below the `twang` R package automatically add mores trees until a stopping rule based on balance it met
+- `twang` chooses propensity scores based on the boosted model with the best balance
+- see [twang documentation](https://cran.r-project.org/web/packages/twang/twang.pdf)
 
 ```{r boosted}
 boosted.mod <- ps(treat ~ age + educ + black + hispan + married + nodegree + re74 + re75,
@@ -607,15 +656,13 @@ plot(boosted.mod, plots=3)
 bal.table(boosted.mod)
 ```
 
-see [twang documentation](https://cran.r-project.org/web/packages/twang/twang.pdf)
-
-- Assessing covariate balance with standardize bias estimation
-\[SB_k = \frac{|\bar X_{k1} - \bar X_{k0}|}{\hat \sigma_k}\]
-
 ## Estimating Average Treatment Effect (ATE)
 - Want $E[Y^1] - E[Y^0]$
-- Treatment population mean estimate:
+- Treatment population mean estimate for $t=0,1$:
 \[\widehat\mu_t = \frac{\sum_{i=1}^n I(T_i=t) Y_i w_i(t)}{\sum_{i=1}^n I(T_i=t) w_i(t)}\]
+- Estimate $E[Y^1] - E[Y^0]$ as $$\widehat{\text{ATE}} = \widehat\mu_1-\widehat\mu_0$$
+- We can use a weighted *t-test* to evaluate $\widehat{\text{ATE}}$
+- McCaffery et all suggests using `svyglm` which achieves the same goal
 
 ```{r outcome}
 library(survey)
