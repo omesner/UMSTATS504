@@ -16,6 +16,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Consulting Skills Focus
 
 - In real life consulting, the client will frequently understand the data and surrounding research better than the data scientist/statistician.
+
+
 - Analysis should center around a well-defined research question that drive the analysis and the data should be able to provide insight on the question of interest.
 - Human bias and data analysis: We all have bias.  This can influence data analysis.  A data analyst, we should do our best to objectively present the data.  When necessary to make assumptions, state them explicitly.  
 - Publication Bias example: Researchers frequently want "positive results."  Usually this means significant p-values.  Variable selection is a simple way to change p-values, p-hacking.  It's common to need to change variables in a model be it should be done a principled way.
@@ -28,7 +30,10 @@ knitr::opts_chunk$set(echo = TRUE)
 - US has more inmates, proportional to population size, than any other country.   While Black Americans make up 13% of the total US population, they account for 40% of incarcerated population in the US.
 ![incarceration world map](./Prisoners_world_map_png2.png)
 Image from [Wikipedia](https://en.wikipedia.org/wiki/Incarceration_in_the_United_States#/media/File:Prisoners_world_map_png2.png)
+
 - In the US justice system, machine learning algorithms are sometimes used to assess a criminal defendant's risk of recidivism (arrest due to committing a future crime) are being used.
+
+
 - Correctional Offenders Management Profiling for Alternative Sanctions (COMPAS) is the most widespread of these algorithms.
 - Its goal according to COMPAS creators: assess "not just risk but also nearly two dozen so-called “criminogenic needs” that relate to the major theories of criminality, including “criminal personality,” “social isolation,” “substance abuse” and “residence/stability.” Defendants are ranked low, medium or high risk in each category."
 - In 2014, then U.S. Attorney General Eric Holder warned that the risk scores might be injecting bias into the courts. He called for the U.S. Sentencing Commission to study their use. “Although these measures were crafted with the best of intentions, I am concerned that they inadvertently undermine our efforts to ensure individualized and equal justice,” he said, adding, “they may exacerbate unwarranted and unjust disparities that are already far too common in our criminal justice system and in our society.”
@@ -40,6 +45,8 @@ Image from [Wikipedia](https://en.wikipedia.org/wiki/Incarceration_in_the_United
 ## Data
 
 - ProPublica requested two years of COMPAS scores from Broward County Sheriff's Office in Florida
+
+
 - Discarded all but pre-trial COMPAS score assessments
 - ProPublica matched COMPAS scores with criminal records from Broward County Clerk's Office website
 - COMPAS score screening date and (original) arrest date frequently differed.  If they are too far apart, that may indicate an error.  The `days_b_screening_arrest` variable gives this difference in days.
@@ -50,14 +57,31 @@ Image from [Wikipedia](https://en.wikipedia.org/wiki/Incarceration_in_the_United
 dat<-read.csv("./compas-scores.csv")
 dim(dat)
 names(dat)
-#head(dat)
-#summary(dat)
+head(dat[,1:12])
+summary(dat)
 ```
+
+Are there multiple rows per person?
+
+```{r}
+length(unique(dat$id))
+length(dat$id)
+length(unique(dat$name))
+sort(table(dat$name), decreasing=TRUE)[1:8]
+
+```
+
+- To me, these seem like common names, so it could be a coincidence, but I would check with the client as due diligence
+
+- What else could we do to check?
+
+What about other demographics?
 
 ```{r sex}
 table(dat$sex)
 table(dat$sex)/sum(!is.na(dat$sex))*100
 ```
+
 
 ```{r age}
 library(ggplot2)
@@ -81,6 +105,8 @@ table(!is.na(dat$decile_score))
 General recommendations:
 
 - Look at the raw data and different plots of the data before doing any modeling.
+
+
 - Look for missing data and for values that might not make sense.
 - Make sure you understand what observations (rows) are included in the data and which of those observations serve your data analysis goals
 - Try to understand what the variables (columns) represent and which ones will serve your data analysis goals
@@ -105,26 +131,48 @@ Is this the best way to present this information?
 
 ## How to model algorithmic bias?
 - What does bias mean here?
-- Would COMPAS give someone a greater score solely due to being Black, without changing anything else?
-- Remember COMPAS doesn't ask for race directly.
+
+
+- Would COMPAS give someone a greater score solely due to being Black or some other demographic, without changing anything else?
+
+
+- Stated differently, if two people have the same risk of recidivism, with race being their only difference, will the algorithm score them differently
+
+
+- Remember COMPAS doesn't ask for race directly
+
+
+- Question: how could this happen theoretically?
+
+
 - How could we quantify bias in this case?  Are race and COMPAS still associated after taking recidivism into account?
+
+
 - It is tempting to use `decile_score ~ is_recid + race` to quantify the association between COMPAS and race while controlling for recidivism.
 
 ## Causation and Collider Bias
 
 ![XKCD causal comic](https://imgs.xkcd.com/comics/correlation.png)
 
-**Bayesian Network 1:**
+### Bayesian Network 1:
+
 ```{r chain, echo=FALSE, out.width = '40%', out.height= '40%'}
 library(DiagrammeR)
 grViz("digraph flowchart {A -> B -> C [constraint=false]}")
 ```
 
+Mental Model: Think of a dataset where $A,B,C$ are collected
+
+- $A$ = Alcohol
+- $B$ = Hangover
+- $C$ = Miss Class
+
 Question: What would a regression model of `C ~ A + B` yield?
+
 - a) Both $A$ and $B$ should be statistically significant
 - b) Only $A$ should be statistically significant
 - c) Only $B$ should be statistically significant
-- d) Neither $A$ nor $B$ should be statistically signficant
+- d) Neither $A$ nor $B$ should be statistically significant
 
 ```{r}
 set.seed(1234)
@@ -136,6 +184,7 @@ summary(lm(C~A+B))
 ```
 
 Question: What about this regression model: `C ~ A`?
+
 - a) $A$ should be statistically significant
 - b) $A$ should not be statistically significant
 
@@ -143,13 +192,35 @@ Question: What about this regression model: `C ~ A`?
 summary(lm(C~A))
 ```
 
-Does this coefficient and intercept estimate make sense?
-$C = 5B + 3 + \epsilon_B = 5(-2A - 25 + \epsilon_A) = -10A - 122 + 5\epsilon_A + \epsilon_B$
+- Coefficient estimates:
+$$\begin{align}
+C &= 5B + 3 + \epsilon_B \\
+&= 5(-2A - 25 + \epsilon_A) \\
+&= -10A - 122 + 5\epsilon_A + \epsilon_B
+\end{align}$$
 
-**Bayesian Network 2:**
+Question: Does this coefficient and intercept estimate make sense?
+
+- a) yes
+- b) nope
+
+### Bayesian Network 2:
 ```{r fork, echo=FALSE, out.width = '40%', out.height='40%'}
 grViz("digraph flowchart {A -> B; A -> C;}")
 ```
+
+Mental Model:
+
+- $A$ = Smoker
+- $B$ = Yellow Teeth
+- $C$ = Cancer
+
+Question: What would a regression model of `C ~ A + B` yield?
+
+- a) Both $A$ and $B$ should be statistically significant
+- b) Only $A$ should be statistically significant
+- c) Only $B$ should be statistically significant
+- d) Neither $A$ nor $B$ should be statistically significant
 
 ```{r}
 set.seed(1234)
@@ -159,12 +230,29 @@ B <- -2*A - 25 + rnorm(size)
 C <- 2*A +5 +rnorm(size)
 summary(lm(C~A+B))
 ```
-What about this regression model: `C ~ A`?  Try it!
 
-**Bayesian Network 3:**
+Question: What about this regression model: `C ~ A`?
+
+- a) $A$ should be statistically significant
+- b) $A$ should not be statistically significant
+
+### Bayesian Network 3:
 ```{r collider, echo=FALSE, out.width = '40%', out.height='40%'}
 grViz("digraph flowchart {A -> C; B -> C;}")
 ```
+
+Mental Model:
+
+- $A$ = Allergies
+- $B$ = Flu
+- $C$ = Sinus
+
+Question: What would a regression model of `C ~ A + B` yield?
+
+- a) Both $A$ and $B$ should be statistically significant
+- b) Only $A$ should be statistically significant
+- c) Only $B$ should be statistically significant
+- d) Neither $A$ nor $B$ should be statistically significant
 
 ```{r}
 set.seed(1234)
@@ -175,9 +263,29 @@ C <- -4*A + 5*B + 3 +rnorm(size)
 summary(lm(C~A+B))
 ```
 
-**Bayesian Network 3 with `A` as the outcome:**
+### Bayesian Network 3 (again) with `A` as the outcome:
+
+```{r collider2, echo=FALSE, out.width = '40%', out.height='40%'}
+grViz("digraph flowchart {A -> C; B -> C;}")
+```
+
+Question: What would a regression model of `A ~ B + C` yield?
+
+- a) Both $B$ and $C$ should be statistically significant
+- b) Only $B$ should be statistically significant
+- c) Only $C$ should be statistically significant
+- d) Neither $B$ nor $C$ should be statistically significant
+
 ```{r}
 summary(lm(A~B+C))
+```
+
+Question: What would a regression model of `A ~ B` yield?
+
+- a) $B$ should be statistically significant
+- b) $B$ should not be statistically significant
+
+```{r}
 summary(lm(A~B))
 ```
 
@@ -191,6 +299,19 @@ summary(lm(A~B))
 grViz("digraph flowchart {A -> C; B -> C; A -> B}")
 ```
 
+Mental Model:
+
+- $A$ = Study into the night
+- $B$ = Go to bed late
+- $C$ = Fail Test
+
+Question: What would a regression model of `C ~ A + B` yield?
+
+- a) Both $A$ and $B$ should be statistically significant
+- b) Only $A$ should be statistically significant
+- c) Only $B$ should be statistically significant
+- d) Neither $A$ nor $B$ should be statistically significant
+
 ```{r}
 set.seed(1234)
 size <- 1000
@@ -198,27 +319,48 @@ A <- 6*rnorm(size)+50
 B <- A - 2*rnorm(size) - 25 + rnorm(size)
 C <- -4*A + 5*B + 3 +rnorm(size)
 summary(lm(C~A+B))
+```
+
+Question: What about this regression model: `C ~ A`?
+
+- a) $A$ should be statistically significant
+- b) $A$ should not be statistically significant
+
+```{r}
 summary(lm(C~A))
+```
+
+Question: What about this regression model: `B ~ A + C`?
+
+- a) Both $A$ and $C$ should be statistically significant
+- b) Only $A$ should be statistically significant
+- c) Only $C$ should be statistically significant
+- d) Neither $A$ nor $C$ should be statistically significant
+
+```{r}
+summary(lm(B~A+C))
 ```
 
 ## COMPAS and possible collider bias
 
-COMPAS uses [questionnaire](https://www.documentcloud.org/documents/2702103-Sample-Risk-Assessment-COMPAS-CORE.html) responses (Q in the diagram) to predict recidivism.  
-```{r, echo=FALSE, out.width = '40%'}
-grViz("digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; Race -> Recidivism}")
+- COMPAS uses [questionnaire](https://www.documentcloud.org/documents/2702103-Sample-Risk-Assessment-COMPAS-CORE.html) responses to predict recidivism.  
+
+- Because COMPAS is used in sentencing, it may actually impact recidivism as well.
+
+- One way to quantify racial bias in COMPAS would be to isolate the link between race and COMPAS that is not associated with recidivism.  But, it is not clear how to untangle this from potential collider bias.
+
+```{dot, out.width = '40%'}
+digraph {
+  Race -> COMPAS [ label = "?"];
+  COMPAS -> Recidivism [ label = "?"]; 
+  Race -> Recidivism [ label = "?"]
+  }
 ```
 
-Because COMPAS is used in sentencing, it may actually impact recidivism as well.
-```{r, echo=FALSE, out.width = '40%'}
-grViz("digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism}")
-```
+- If we used `decile_score ~ is_recid + race` as a model to quantify bias, it seems very likely that there will be collider bias
 
-One way to quantify racial bias in COMPAS would be to isolate the link between race and COMPAS that is not associated with recidivism.  But, it is not clear how to untangle this from potential collider bias.
-```{r, echo=FALSE, out.width = '40%'}
-grViz("digraph flowchart {Race -> Q -> COMPAS; Q -> Recidivism; COMPAS -> Recidivism; Race -> Recidivism; Race-> COMPAS}")
-```
-
-If we used `decile_score ~ is_recid + race` as a model to quantify bias, it seems very likely that there will be collider bias.
+- IMPORTANT: The model below is NOT informative because of the possible causal structure of the data
+  - Included for teaching purposes only
 
 ```{r compasColliderBias}
 summary(lm(decile_score ~ is_recid + race, data=df))
@@ -229,17 +371,20 @@ In the regression above, several race indicator variables are significant.  But,
 ## Survival Analysis
 
 - Survival analysis is a set of statistical methods for modeling the time until an event occurs, especially when follow up is not complete for each observation.
+
 - Example: Testing a new terminal cancer treatment, participants are either given the standard or test treatment.  The goal is to prolong the patient's life.  Each patient is followed until death from cancer.  During follow up some participants die from cancer but some drop out while others might die from something else.  Survival analysis allows us to use this data even though we do not have events for each participant.
 
 **Set up**
 
 - Assume that $T$ is the time until an event randomly occurs.
+
 - For example, $T$ might be the duration from cancer treatment until remission or death.
 - $T\sim f$: $f(t)$ is the probability density function (pdf) of $T$ where $t$ is time
 - $F(t)=P(T<t)=\int_0^tf(x)dx$ is cumulative distribution function (cdf) of $T$
 - Survival function:
 $$S(t)=P(T>t)=1-F(t)$$
 - The survival function gives the probability of not having an event before time $t$ (survive until $t$)
+
 - Hazard function:
 \[
 \lambda(t)=\lim_{h\rightarrow 0} \frac{P(t<T\leq t+h)}{P(T>t)}= \frac{f(t)}{S(t)} = -\frac{d\log S(t)}{dt}.
@@ -267,6 +412,7 @@ $$
 **Censoring at Random**
 
 - Not always possible to wait for an event to occur for each participant before doing the analysis
+
 - Cancer study example: participants may drop out of the study before an event is observed or the study may close before each participant experiences an event
 - This is call right censored data: have start time but end times can either be at event or drop out time
 - Question: For censored observations, how to make use of time duration without event?
@@ -274,6 +420,7 @@ $$
 ![right censoring image from [here](http://reliawiki.org/index.php/Life_Data_Classification)](./Right_censoring.png)
 
 - Model: $f(t|x; \theta)$ with corresponding hazard, $\lambda(t|x;\theta)$, and survival, $S(t|x;\theta)$
+
 - Want $\theta$ to quantify difference in risk (until event) among observations
   - Note: $\theta$ quantifies how fast an event will likely occur for an observation but communicated in terms of risk of event
 - Assumption: censoring occurs at random (in independently from $f$)
@@ -297,6 +444,7 @@ L(\theta,\phi) &= \prod_{i=1}^n [f(t_i;\theta)[1-G(t_i;\phi)]]^{\delta_i} [g(t_i
 \]
 
 - Oobserve an event for $i$ ($\delta_i=1$), then $t_i\sim f$ and censoring did not occur prior $[f(t_i;\theta)[1-G(t_i;\phi)]]^{\delta_i}$
+
 - Observe censoring for $i$ ($\delta_i=1$), then $t_i\sim g$ and an event did not occur prior $[g(t_i;\phi)S(t_i;\theta)]^{1-\delta_i}$
 - But, we do not care about the censoring distribution, only the time to event distribution.
 - Partial likelihood 
@@ -305,6 +453,7 @@ $$L(\theta)=\prod_{i=1}^n [f(t_i;\theta)]^{\delta_i}[S(t_i;\theta)]^{1-\delta_i}
 ## Kaplan-Meier Estimator
 
 - Consider estimating survival: $S(t) = P(T>t)$ from sample $(t_1, \delta_1),\dots, (t_n,\delta_n)$
+
 - Approximate $S(t)$ as a non-parametric decreasing step function
   - $S(t)$ is proportion of sample that has not experienced an event at time $t$
   - Problem: If $i$ censored prior to $t$, we cannot know if their event occurred before or after $t$
@@ -324,6 +473,7 @@ S(t_{(j)}) = (1-\pi_j)(1-\pi_{j-1}) \dots (1-\pi_2)(1-\pi_1).
 \]
 - Calculate $\pi_j$:
   - Let $n_j = \#\{t_i \geq t_{(j)}\}$ be the number of participants who are still at risk (who haven't had an event or been censored) at time $t_{(j)}$
+  
   - Note: that $n_j$ decreases as events occur or as they are censored.
   - Let $d_j = \#\{t_i=t_{(j)}, \delta_i=1\}$ be the number of events that occur at time $t_{(j)}$.
   - Maximizes the non-parametric likelihood
