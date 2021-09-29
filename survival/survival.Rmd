@@ -142,6 +142,11 @@ Is this the best way to present this information?
 - Remember COMPAS doesn't ask for race directly
 
 
+- What does race affecting recidivism mean?
+  - No: Someones race affects their behavior
+  - Yes: The effect of race living in a racially biased society
+
+
 - Question: how could this happen theoretically?
 
 
@@ -195,7 +200,7 @@ summary(lm(C~A))
 - Coefficient estimates:
 $$\begin{align}
 C &= 5B + 3 + \epsilon_B \\
-&= 5(-2A - 25 + \epsilon_A) \\
+&= 5(-2A - 25 + \epsilon_A) + 3 + \epsilon_B \\
 &= -10A - 122 + 5\epsilon_A + \epsilon_B
 \end{align}$$
 
@@ -379,7 +384,8 @@ In the regression above, several race indicator variables are significant.  But,
 - Assume that $T$ is the time until an event randomly occurs.
 
 - For example, $T$ might be the duration from cancer treatment until remission or death.
-- $T\sim f$: $f(t)$ is the probability density function (pdf) of $T$ where $t$ is time
+- $T\sim f$
+  - That is, $f(t)$ is the probability density function (pdf) of $T$ where $t$ is time
 - $F(t)=P(T<t)=\int_0^tf(x)dx$ is cumulative distribution function (cdf) of $T$
 - Survival function:
 $$S(t)=P(T>t)=1-F(t)$$
@@ -387,7 +393,7 @@ $$S(t)=P(T>t)=1-F(t)$$
 
 - Hazard function:
 \[
-\lambda(t)=\lim_{h\rightarrow 0} \frac{P(t<T\leq t+h)}{P(T>t)}= \frac{f(t)}{S(t)} = -\frac{d\log S(t)}{dt}.
+\lambda(t) =\lim_{h\rightarrow 0} P(T\leq t+h | T>t) =\lim_{h\rightarrow 0} \frac{P(t<T\leq t+h)}{P(T>t)}= \frac{f(t)}{S(t)} = -\frac{d\log S(t)}{dt}.
 \]
 - Hazard give the instantaneous probability of an event at time $t$ given survival until time $t$
 - Notice that $f(t)=\lambda(t)S(t)$
@@ -462,11 +468,11 @@ $$t_{(1)}, t_{(2)}, \dots, t_{(J)}$$
 - There are only $J$ sample points in time where events occur
 - Recall conditional probability rule $P(A|B)=\frac{P(A,B)}{P(B)}$
 - Because $t_{(j)} > t_{(j-1)}$,
-$$S(t_{(j)}) = P(T > t_{(j)}) = P(T > t_{(j)}, T > t_{(j-1)}) = P(T > t_{(j)} | T > t_{(j-1)}) P(T > t_{(j-1)})$$
+$$S\left(t_{(j)}\right) = P\left(T > t_{(j)}\right) = P\left(T > t_{(j)}, T > t_{(j-1)}\right) = P\left(T > t_{(j)} | T > t_{(j-1)}\right) \times P\left(T > t_{(j-1)}\right)$$
 - Repeating
-$$S(t_{(j)}) = P(T > t_{(j)} | T > t_{(j-1)}) P(T > t_{(j-1)} | T > t_{(j-2)}) P(T > t_{(j-2)})$$
+$$S\left(t_{(j)}\right) = P\left(T > t_{(j)} | T > t_{(j-1)}\right) \times P\left(T > t_{(j-1)} | T > t_{(j-2)}\right) \times P\left(T > t_{(j-2)}\right)$$
 - For $j = 1,\dots, J$, the "instantaneous" probability of an event occurring at time $t_j$:
-$$\pi_j = 1-P\left(T > t_{(j)} | T > t_{(j-1)}\right)$$
+$$\pi_j = P\left(T \leq t_{(j)} | T > t_{(j-1)}\right) = 1-P\left(T > t_{(j)} | T > t_{(j-1)}\right)$$
 - Then 
 \[
 S(t_{(j)}) = (1-\pi_j)(1-\pi_{j-1}) \dots (1-\pi_2)(1-\pi_1).
