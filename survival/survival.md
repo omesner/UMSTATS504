@@ -402,6 +402,11 @@ Is this the best way to present this information?
 - Remember COMPAS doesn't ask for race directly
 
 
+- What does race affecting recidivism mean?
+  - No: Someones race affects their behavior
+  - Yes: The effect of race living in a racially biased society
+
+
 - Question: how could this happen theoretically?
 
 
@@ -416,8 +421,8 @@ Is this the best way to present this information?
 
 ### Bayesian Network 1:
 
-<!--html_preserve--><div id="htmlwidget-34b3572f76257653afab" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-34b3572f76257653afab">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-e2ad83a6f3898a4144f4" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-e2ad83a6f3898a4144f4">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model: Think of a dataset where $A,B,C$ are collected
 
@@ -498,7 +503,7 @@ summary(lm(C~A))
 - Coefficient estimates:
 $$\begin{align}
 C &= 5B + 3 + \epsilon_B \\
-&= 5(-2A - 25 + \epsilon_A) \\
+&= 5(-2A - 25 + \epsilon_A) + 3 + \epsilon_B \\
 &= -10A - 122 + 5\epsilon_A + \epsilon_B
 \end{align}$$
 
@@ -508,8 +513,8 @@ Question: Does this coefficient and intercept estimate make sense?
 - b) nope
 
 ### Bayesian Network 2:
-<!--html_preserve--><div id="htmlwidget-5a040e5630810394f380" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-5a040e5630810394f380">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-4b62417d46d92cf8a65c" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-4b62417d46d92cf8a65c">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -562,8 +567,8 @@ Question: What about this regression model: `C ~ A`?
 - b) $A$ should not be statistically significant
 
 ### Bayesian Network 3:
-<!--html_preserve--><div id="htmlwidget-35cb08db27e77e0dbd0b" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-35cb08db27e77e0dbd0b">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-de3ae73cc2a9a44a9880" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-de3ae73cc2a9a44a9880">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -612,8 +617,8 @@ summary(lm(C~A+B))
 
 ### Bayesian Network 3 (again) with `A` as the outcome:
 
-<!--html_preserve--><div id="htmlwidget-6b6305494c0fe0cd8369" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-6b6305494c0fe0cd8369">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-4813d639d6a57cb7f886" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-4813d639d6a57cb7f886">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Question: What would a regression model of `A ~ B + C` yield?
 
@@ -686,8 +691,8 @@ summary(lm(A~B))
 - $A$ and $B$ are independent; that is, knowledge of $B$ give no information on the value of $A$. But, additional knowledge of $C$ does give information about the value of $A$.
 
 **Bayesian Network 4**
-<!--html_preserve--><div id="htmlwidget-7eda715705a7ca764629" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-7eda715705a7ca764629">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-826f9d4957a3f697c252" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-826f9d4957a3f697c252">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -868,7 +873,8 @@ In the regression above, several race indicator variables are significant.  But,
 - Assume that $T$ is the time until an event randomly occurs.
 
 - For example, $T$ might be the duration from cancer treatment until remission or death.
-- $T\sim f$: $f(t)$ is the probability density function (pdf) of $T$ where $t$ is time
+- $T\sim f$
+  - That is, $f(t)$ is the probability density function (pdf) of $T$ where $t$ is time
 - $F(t)=P(T<t)=\int_0^tf(x)dx$ is cumulative distribution function (cdf) of $T$
 - Survival function:
 $$S(t)=P(T>t)=1-F(t)$$
@@ -876,9 +882,9 @@ $$S(t)=P(T>t)=1-F(t)$$
 
 - Hazard function:
 \[
-\lambda(t)=\lim_{h\rightarrow 0} \frac{P(t<T\leq t+h)}{P(T>t)}= \frac{f(t)}{S(t)} = -\frac{d\log S(t)}{dt}.
+\lambda(t) =\lim_{h\rightarrow 0} P(T\leq t+h | T>t) =\lim_{h\rightarrow 0} \frac{P(t<T\leq t+h)}{P(T>t)}= \frac{f(t)}{S(t)} = -\frac{d\log S(t)}{dt}.
 \]
-- Hazard give the instantaneous probability of an event at time $t$ given survival until time $t$
+- Hazard function gives the instantaneous probability of an event at time $t$ given survival until time $t$
 - Notice that $f(t)=\lambda(t)S(t)$
 - Cumulative hazard function:
 \[
@@ -902,21 +908,36 @@ $$
 
 - Not always possible to wait for an event to occur for each participant before doing the analysis
 
+
 - Cancer study example: participants may drop out of the study before an event is observed or the study may close before each participant experiences an event
+
+
 - This is call right censored data: have start time but end times can either be at event or drop out time
+
+
 - Question: For censored observations, how to make use of time duration without event?
 
-![right censoring image from [here](http://reliawiki.org/index.php/Life_Data_Classification)](./Right_censoring.png)
+
+![Right Censored Data](./censoredData.png)
+
 
 - Model: $f(t|x; \theta)$ with corresponding hazard, $\lambda(t|x;\theta)$, and survival, $S(t|x;\theta)$
 
 - Want $\theta$ to quantify difference in risk (until event) among observations
   - Note: $\theta$ quantifies how fast an event will likely occur for an observation but communicated in terms of risk of event
+
+  
 - Assumption: censoring occurs at random (in independently from $f$)
+
+
 - Censoring cumulative probability distribution model:
 $$G(t;\phi)$$
+
+
 - Corresponding censoring pdf model:
 $$g(t;\phi)$$
+
+
 - Data:
 $$(t_1, \delta_1),\dots, (t_n,\delta_n)$$
 - $t_i$ for $i=1,\dots,n$ is duration of follow-up until either event or censor time
@@ -932,30 +953,57 @@ L(\theta,\phi) &= \prod_{i=1}^n [f(t_i;\theta)[1-G(t_i;\phi)]]^{\delta_i} [g(t_i
 \end{align}
 \]
 
-- Oobserve an event for $i$ ($\delta_i=1$), then $t_i\sim f$ and censoring did not occur prior $[f(t_i;\theta)[1-G(t_i;\phi)]]^{\delta_i}$
+- Observe an event for $i$ ($\delta_i=1$), then $t_i\sim f$ and censoring did not occur prior $[f(t_i;\theta)[1-G(t_i;\phi)]]^{\delta_i}$
+
 
 - Observe censoring for $i$ ($\delta_i=1$), then $t_i\sim g$ and an event did not occur prior $[g(t_i;\phi)S(t_i;\theta)]^{1-\delta_i}$
+
+
 - But, we do not care about the censoring distribution, only the time to event distribution.
+
+
 - Partial likelihood 
 $$L(\theta)=\prod_{i=1}^n [f(t_i;\theta)]^{\delta_i}[S(t_i;\theta)]^{1-\delta_i}= \prod_{i=1}^n \lambda(t_i)^{\delta_i} S(t_i)$$ 
 
 ## Kaplan-Meier Estimator
+
+- Question: Have you heard of/seen Kaplan-Meier Curves before this?
+  - A: Yes
+  - B: No
+
+- Visualize the percent of population surviving until time $t$ as $t$ increases
+
+![KM Curve Example](https://cdn.graphpad.com/faq/1747/images/1747d.gif)
 
 - Consider estimating survival: $S(t) = P(T>t)$ from sample $(t_1, \delta_1),\dots, (t_n,\delta_n)$
 
 - Approximate $S(t)$ as a non-parametric decreasing step function
   - $S(t)$ is proportion of sample that has not experienced an event at time $t$
   - Problem: If $i$ censored prior to $t$, we cannot know if their event occurred before or after $t$
+
 - Order sample by event times $t_i$ where $\delta_i=1$: 
 $$t_{(1)}, t_{(2)}, \dots, t_{(J)}$$
+
+
 - There are only $J$ sample points in time where events occur
+
+
 - Recall conditional probability rule $P(A|B)=\frac{P(A,B)}{P(B)}$
+
+
 - Because $t_{(j)} > t_{(j-1)}$,
-$$S(t_{(j)}) = P(T > t_{(j)}) = P(T > t_{(j)}, T > t_{(j-1)}) = P(T > t_{(j)} | T > t_{(j-1)}) P(T > t_{(j-1)})$$
+$$S\left(t_{(j)}\right) = P\left(T > t_{(j)}\right) = P\left(T > t_{(j)}, T > t_{(j-1)}\right) = P\left(T > t_{(j)} | T > t_{(j-1)}\right) \times P\left(T > t_{(j-1)}\right)$$
 - Repeating
-$$S(t_{(j)}) = P(T > t_{(j)} | T > t_{(j-1)}) P(T > t_{(j-1)} | T > t_{(j-2)}) P(T > t_{(j-2)})$$
+$$\begin{align*}
+S\left(t_{(j)}\right) 
+&= P\left(T > t_{(j)} | T > t_{(j-1)}\right) \times P\left(T > t_{(j-1)} | T > t_{(j-2)}\right) \times P\left(T > t_{(j-2)}\right) \\
+&= P\left(T > t_{(j)} | T > t_{(j-1)}\right) \times P\left(T > t_{(j-1)} | T > t_{(j-2)}\right) \times\dots\times P\left(T > t_{(2)} | T > t_{(1)}\right) \times P\left(T > t_{(1)}\right)\\
+\end{align*}$$
+
+- This seems [tautological](https://www.merriam-webster.com/dictionary/tautology), but it's helpful here because it allows us to include the censored observations in the denominator appropriately as $t$ increases
+
 - For $j = 1,\dots, J$, the "instantaneous" probability of an event occurring at time $t_j$:
-$$\pi_j = 1-P\left(T > t_{(j)} | T > t_{(j-1)}\right)$$
+$$\pi_j = P\left(T \leq t_{(j)} | T > t_{(j-1)}\right) = 1-P\left(T > t_{(j)} | T > t_{(j-1)}\right)$$
 - Then 
 \[
 S(t_{(j)}) = (1-\pi_j)(1-\pi_{j-1}) \dots (1-\pi_2)(1-\pi_1).
@@ -982,7 +1030,6 @@ This [video](https://www.youtube.com/watch?v=NDgn72ynHcM) clearly illustrates ho
 
 ```r
 library(survival)
-library(ggfortify)
 
 dat <- read.csv(url('https://raw.githubusercontent.com/propublica/compas-analysis/master/cox-parsed.csv'))
 names(dat)
@@ -1044,12 +1091,12 @@ dim(dat3)
 ```
 
 ```r
-ph <- dat3[!is.na(dat3$decile_score),]
+ph <- dat3[dat3$decile_score>0,]
 dim(ph)
 ```
 
 ```
-## [1] 10325    52
+## [1] 10314    52
 ```
 
 ```r
@@ -1085,33 +1132,61 @@ survdiff(survobj~race, data=ph)
 ## survdiff(formula = survobj ~ race, data = ph)
 ## 
 ##                          N Observed Expected (O-E)^2/E (O-E)^2/V
-## race=African-American 5150     1608  1294.09    76.146   143.666
-## race=Asian              51        8    16.21     4.159     4.187
-## race=Caucasian        3576      815   996.20    32.959    51.627
-## race=Hispanic          944      206   275.19    17.397    19.343
-## race=Native American    32        6     8.25     0.616     0.618
-## race=Other             572      118   171.05    16.453    17.557
+## race=African-American 5147     1607  1293.97    75.725   142.951
+## race=Asian              51        8    16.22     4.167     4.195
+## race=Caucasian        3569      814   994.40    32.727    51.230
+## race=Hispanic          944      206   275.38    17.480    19.438
+## race=Native American    32        6     8.26     0.618     0.621
+## race=Other             571      118   170.77    16.305    17.397
 ## 
-##  Chisq= 148  on 5 degrees of freedom, p= <2e-16
+##  Chisq= 147  on 5 degrees of freedom, p= <2e-16
 ```
+
+```r
+ph$compas <- cut(ph$decile_score, breaks=c(0,3,6,10))
+fitc <- survfit(survobj~compas, data=ph)
+plot(fitc, xlab="Time at risk of recidivism in Days", 
+   ylab="% not rearrested", yscale=100,
+   main="Survival Distribution by COMPAS",
+   col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple')) 
+legend('bottomleft', legend=levels(as.factor(ph$compas)), col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple'), lty=1)
+```
+
+![](survival_files/figure-html/km_curve-3.png)<!-- -->
 
 Note: I haven't used this package in a long time so I needed to look how to use the functions in [documentation](https://cran.r-project.org/web/packages/survival/survival.pdf).  As a consultant, you will probably need to read the documentation a lot.
 
 ## Cox proportional hazards model
 
 - Difficult to work with censored data using generalized linear models
-- We can use use Poisson regression, how?
+
+
+- Question: We can use use a GLM here?
+  - A: Yes
+  - B: No
+  - C: Not Sure
+
+
 - Assuming that each individual hazard function is proportional to some common baseline hazard function makes the problem workable:
 \[
 \lambda(t|x_i) = \lambda_0(t) \exp(\beta x_i)
 \]
-where $X_i$ is the covariate vector for participant $i$ and $\beta$ is the parameter vector to be estimated
-- $\lambda_0(t)$ is the hazard function for $x=0$
+where $x_i$ is the covariate vector for participant $i$ and $\beta$ is the parameter vector to be estimated
+
+
+- $\lambda_0(t)$ is the hazard function for $x_i=(0,\dots,0)$
+
+
 - $\exp(\beta x_i)$ explains proportional differences in hazards as $x_i$ changes as in parametric regression
+
+
 - Then the probability that individual $j$ experiences an event at $t_{(j)}$ given survival until $t_{(j)}$ is
 $$\lambda(t_{(j)}|x_{(j)})=\lambda_0(t_{(j)})\exp(x_{(j)}\beta)$$
+
+
 - The total probability within the sample of an event occurring at time $t_{(j)}$ given those who have survived until $t_{(j)}$ is 
 $$\sum_{k: t_k\geq t_{(j)}} \lambda(t_{(j)}|x_k) = \sum_{k: t_k\geq t_{(j)}} \lambda_0(t_{(j)})\exp(x_k\beta)$$
+
 - Then probability of an event occurring at $t_{(j)}$ conditioning on covariates $x_{(j)}$ (the likelihood) is
 $$\begin{align*}
 L_j(\beta) &= P[(j)\text{ fails}|\text{1 failure from those at risk at $t_{(j)}$}]
@@ -1119,7 +1194,10 @@ L_j(\beta) &= P[(j)\text{ fails}|\text{1 failure from those at risk at $t_{(j)}$
 &= \frac{\lambda(t_{(j)}|x_{(j)})}{\sum_{k: t_k\geq t_{(j)}} \lambda(t_{(j)}|x_k)} = \frac{\lambda_0(t_{(j)})\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \lambda_0(t_{(j)})\exp(x_k\beta)}
 = \frac{\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \exp(x_k\beta)}
 \end{align*}$$
+
+
 - Notice that the baseline hazard function, $\lambda_0(t)$, cancels.  So, now we can use use an optimization technique to maximize this function
+
 - The joint likelihood for the sample is
 $$\tilde L(\beta) = \prod_{j=1}^J L_j(\beta) = \prod_{j=1}^J \frac{\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \exp(x_k\beta)}
 = \prod_{i=1}^n \left[\frac{\exp(x_i\beta)}{\sum_{\ell\in R(t_i)} \exp(x_\ell\beta)}\right]^{\delta_i}$$
@@ -1132,216 +1210,103 @@ where $R(t) = \left\{\ell: t_\ell \geq t\right\}$
 
 - Maximize the likelihood with Newton-Raphson method
 
+### Is COMPAS racially biased?
+
+- To determine this, we must use interactions
 
 
+- Let $A$ and $B$ be binary, input variables and $Y$ a continuous outcome
+  - assume linear regression
 
-```r
-summary(coxph(survobj~race, data=ph))
-```
 
-```
-## Call:
-## coxph(formula = survobj ~ race, data = ph)
-## 
-##   n= 10325, number of events= 2761 
-## 
-##                         coef exp(coef) se(coef)      z Pr(>|z|)    
-## raceAsian           -0.92516   0.39647  0.35444 -2.610  0.00905 ** 
-## raceCaucasian       -0.41881   0.65783  0.04302 -9.735  < 2e-16 ***
-## raceHispanic        -0.50790   0.60176  0.07403 -6.861 6.83e-12 ***
-## raceNative American -0.53681   0.58461  0.40901 -1.312  0.18937    
-## raceOther           -0.58971   0.55449  0.09540 -6.182 6.34e-10 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-##                     exp(coef) exp(-coef) lower .95 upper .95
-## raceAsian              0.3965      2.522    0.1979    0.7942
-## raceCaucasian          0.6578      1.520    0.6046    0.7157
-## raceHispanic           0.6018      1.662    0.5205    0.6957
-## raceNative American    0.5846      1.711    0.2622    1.3032
-## raceOther              0.5545      1.803    0.4599    0.6685
-## 
-## Concordance= 0.56  (se = 0.005 )
-## Likelihood ratio test= 149.5  on 5 df,   p=<2e-16
-## Wald test            = 145.2  on 5 df,   p=<2e-16
-## Score (logrank) test = 148.1  on 5 df,   p=<2e-16
-```
+- How do we read the output?
 
-```r
-summary(coxph(survobj~race+decile_score, data=ph))
-```
+| Variable | Coef | p-value |
+| --- | --- | ---  |
+| A | 1.5 | 0.01 |
+| B | 0.1 | 0.35 |
+| A*B | 0.5 | 0.02 |
 
-```
-## Call:
-## coxph(formula = survobj ~ race + decile_score, data = ph)
-## 
-##   n= 10325, number of events= 2761 
-## 
-##                          coef exp(coef)  se(coef)      z Pr(>|z|)    
-## raceAsian           -0.455020  0.634435  0.354974 -1.282  0.19990    
-## raceCaucasian       -0.123647  0.883692  0.044612 -2.772  0.00558 ** 
-## raceHispanic        -0.167138  0.846083  0.075232 -2.222  0.02631 *  
-## raceNative American -0.489950  0.612657  0.409016 -1.198  0.23097    
-## raceOther           -0.147075  0.863229  0.097131 -1.514  0.12997    
-## decile_score         0.179991  1.197207  0.006903 26.074  < 2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-##                     exp(coef) exp(-coef) lower .95 upper .95
-## raceAsian              0.6344     1.5762    0.3164    1.2722
-## raceCaucasian          0.8837     1.1316    0.8097    0.9644
-## raceHispanic           0.8461     1.1819    0.7301    0.9805
-## raceNative American    0.6127     1.6322    0.2748    1.3658
-## raceOther              0.8632     1.1584    0.7136    1.0442
-## decile_score           1.1972     0.8353    1.1811    1.2135
-## 
-## Concordance= 0.66  (se = 0.005 )
-## Likelihood ratio test= 818.3  on 6 df,   p=<2e-16
-## Wald test            = 833.8  on 6 df,   p=<2e-16
-## Score (logrank) test = 885.5  on 6 df,   p=<2e-16
-```
-
-```r
-summary(coxph(survobj~race+age+decile_score, data=ph))
-```
-
-```
-## Call:
-## coxph(formula = survobj ~ race + age + decile_score, data = ph)
-## 
-##   n= 10325, number of events= 2761 
-## 
-##                          coef exp(coef)  se(coef)      z Pr(>|z|)    
-## raceAsian           -0.463000  0.629393  0.354942 -1.304   0.1921    
-## raceCaucasian       -0.109144  0.896601  0.044552 -2.450   0.0143 *  
-## raceHispanic        -0.174254  0.840084  0.075181 -2.318   0.0205 *  
-## raceNative American -0.494427  0.609920  0.409016 -1.209   0.2267    
-## raceOther           -0.163731  0.848970  0.097054 -1.687   0.0916 .  
-## age                 -0.010236  0.989817  0.001859 -5.505  3.7e-08 ***
-## decile_score         0.167991  1.182926  0.007261 23.137  < 2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-##                     exp(coef) exp(-coef) lower .95 upper .95
-## raceAsian              0.6294     1.5888    0.3139    1.2620
-## raceCaucasian          0.8966     1.1153    0.8216    0.9784
-## raceHispanic           0.8401     1.1904    0.7250    0.9735
-## raceNative American    0.6099     1.6396    0.2736    1.3597
-## raceOther              0.8490     1.1779    0.7019    1.0268
-## age                    0.9898     1.0103    0.9862    0.9934
-## decile_score           1.1829     0.8454    1.1662    1.1999
-## 
-## Concordance= 0.661  (se = 0.005 )
-## Likelihood ratio test= 849.8  on 7 df,   p=<2e-16
-## Wald test            = 843  on 7 df,   p=<2e-16
-## Score (logrank) test = 897.4  on 7 df,   p=<2e-16
-```
+- On average, $Y$ increases by 1.5 when $A=1$ compared to $A=0$ while controlling for $B$ and this change is statistically significant at an $\alpha=0.05$ signifiance level
+- There is no evidence to suggest that $B$ is associated with $Y$ (while controlling for $A$)
+- Additionally, $Y$ increases by 0.5 when both $A$ and $B$ are 1
 
 - Changing the baseline race
+  - R uses alphabetical order so African-American (AA) would be the reference group without the `relevel` command
+  - Now, Caucasian (white) is the reference group
+  - In most medical literature, white is the reference racial group, but this has come under some criticism
+  - Here, because AA is of particular interest, we probably don't want AA to be the reference group
+- We divide age by 10 so that we can interpret change in risk per 10 years of age
 
 
 ```r
 ph$race = relevel(as.factor(ph$race), ref="Caucasian")
-summary(coxph(survobj~race, data=ph))
+ph$age10 = ph$age/10
+summary(coxph(survobj~race*decile_score+age10, data=ph))
 ```
 
 ```
 ## Call:
-## coxph(formula = survobj ~ race, data = ph)
+## coxph(formula = survobj ~ race * decile_score + age10, data = ph)
 ## 
-##   n= 10325, number of events= 2761 
+##   n= 10314, number of events= 2759 
 ## 
-##                          coef exp(coef) se(coef)      z Pr(>|z|)    
-## raceAfrican-American  0.41881   1.52015  0.04302  9.735   <2e-16 ***
-## raceAsian            -0.50635   0.60269  0.35529 -1.425   0.1541    
-## raceHispanic         -0.08909   0.91477  0.07798 -1.142   0.2533    
-## raceNative American  -0.11800   0.88870  0.40975 -0.288   0.7734    
-## raceOther            -0.17090   0.84291  0.09850 -1.735   0.0827 .  
+##                                       coef exp(coef) se(coef)      z Pr(>|z|)
+## raceAfrican-American               0.25736   1.29351  0.09147  2.814   0.0049
+## raceAsian                         -1.81253   0.16324  0.83302 -2.176   0.0296
+## raceHispanic                       0.07436   1.07719  0.14092  0.528   0.5977
+## raceNative American               -2.44849   0.08642  1.52191 -1.609   0.1077
+## raceOther                         -0.21598   0.80575  0.17696 -1.220   0.2223
+## decile_score                       0.18448   1.20260  0.01306 14.129  < 2e-16
+## age10                             -0.09567   0.90877  0.01875 -5.102 3.36e-07
+## raceAfrican-American:decile_score -0.02812   0.97227  0.01560 -1.802   0.0715
+## raceAsian:decile_score             0.31320   1.36779  0.12583  2.489   0.0128
+## raceHispanic:decile_score         -0.03159   0.96890  0.02780 -1.137   0.2557
+## raceNative American:decile_score   0.28200   1.32578  0.17978  1.569   0.1167
+## raceOther:decile_score             0.04658   1.04768  0.03587  1.299   0.1941
+##                                      
+## raceAfrican-American              ** 
+## raceAsian                         *  
+## raceHispanic                         
+## raceNative American                  
+## raceOther                            
+## decile_score                      ***
+## age10                             ***
+## raceAfrican-American:decile_score .  
+## raceAsian:decile_score            *  
+## raceHispanic:decile_score            
+## raceNative American:decile_score     
+## raceOther:decile_score               
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-##                      exp(coef) exp(-coef) lower .95 upper .95
-## raceAfrican-American    1.5202     0.6578    1.3972     1.654
-## raceAsian               0.6027     1.6592    0.3004     1.209
-## raceHispanic            0.9148     1.0932    0.7851     1.066
-## raceNative American     0.8887     1.1252    0.3981     1.984
-## raceOther               0.8429     1.1864    0.6949     1.022
-## 
-## Concordance= 0.56  (se = 0.005 )
-## Likelihood ratio test= 149.5  on 5 df,   p=<2e-16
-## Wald test            = 145.2  on 5 df,   p=<2e-16
-## Score (logrank) test = 148.1  on 5 df,   p=<2e-16
-```
-
-```r
-summary(coxph(survobj~race+decile_score, data=ph))
-```
-
-```
-## Call:
-## coxph(formula = survobj ~ race + decile_score, data = ph)
-## 
-##   n= 10325, number of events= 2761 
-## 
-##                           coef exp(coef)  se(coef)      z Pr(>|z|)    
-## raceAfrican-American  0.123647  1.131616  0.044612  2.772  0.00558 ** 
-## raceAsian            -0.331373  0.717937  0.355369 -0.932  0.35109    
-## raceHispanic         -0.043491  0.957441  0.078003 -0.558  0.57715    
-## raceNative American  -0.366303  0.693293  0.409889 -0.894  0.37150    
-## raceOther            -0.023428  0.976844  0.098711 -0.237  0.81239    
-## decile_score          0.179991  1.197207  0.006903 26.074  < 2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-##                      exp(coef) exp(-coef) lower .95 upper .95
-## raceAfrican-American    1.1316     0.8837    1.0369     1.235
-## raceAsian               0.7179     1.3929    0.3578     1.441
-## raceHispanic            0.9574     1.0445    0.8217     1.116
-## raceNative American     0.6933     1.4424    0.3105     1.548
-## raceOther               0.9768     1.0237    0.8050     1.185
-## decile_score            1.1972     0.8353    1.1811     1.214
-## 
-## Concordance= 0.66  (se = 0.005 )
-## Likelihood ratio test= 818.3  on 6 df,   p=<2e-16
-## Wald test            = 833.8  on 6 df,   p=<2e-16
-## Score (logrank) test = 885.5  on 6 df,   p=<2e-16
-```
-
-```r
-summary(coxph(survobj~race+age+decile_score, data=ph))
-```
-
-```
-## Call:
-## coxph(formula = survobj ~ race + age + decile_score, data = ph)
-## 
-##   n= 10325, number of events= 2761 
-## 
-##                           coef exp(coef)  se(coef)      z Pr(>|z|)    
-## raceAfrican-American  0.109144  1.115323  0.044552  2.450   0.0143 *  
-## raceAsian            -0.353856  0.701976  0.355388 -0.996   0.3194    
-## raceHispanic         -0.065110  0.936965  0.078095 -0.834   0.4044    
-## raceNative American  -0.385283  0.680258  0.409893 -0.940   0.3472    
-## raceOther            -0.054587  0.946876  0.098846 -0.552   0.5808    
-## age                  -0.010236  0.989817  0.001859 -5.505  3.7e-08 ***
-## decile_score          0.167991  1.182926  0.007261 23.137  < 2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-##                      exp(coef) exp(-coef) lower .95 upper .95
-## raceAfrican-American    1.1153     0.8966    1.0221    1.2171
-## raceAsian               0.7020     1.4245    0.3498    1.4087
-## raceHispanic            0.9370     1.0673    0.8040    1.0919
-## raceNative American     0.6803     1.4700    0.3046    1.5191
-## raceOther               0.9469     1.0561    0.7801    1.1493
-## age                     0.9898     1.0103    0.9862    0.9934
-## decile_score            1.1829     0.8454    1.1662    1.1999
+##                                   exp(coef) exp(-coef) lower .95 upper .95
+## raceAfrican-American                1.29351     0.7731  1.081223    1.5475
+## raceAsian                           0.16324     6.1259  0.031898    0.8354
+## raceHispanic                        1.07719     0.9283  0.817225    1.4199
+## raceNative American                 0.08642    11.5708  0.004377    1.7064
+## raceOther                           0.80575     1.2411  0.569597    1.1398
+## decile_score                        1.20260     0.8315  1.172211    1.2338
+## age10                               0.90877     1.1004  0.875973    0.9428
+## raceAfrican-American:decile_score   0.97227     1.0285  0.942989    1.0025
+## raceAsian:decile_score              1.36779     0.7311  1.068836    1.7504
+## raceHispanic:decile_score           0.96890     1.0321  0.917530    1.0232
+## raceNative American:decile_score    1.32578     0.7543  0.932054    1.8858
+## raceOther:decile_score              1.04768     0.9545  0.976552    1.1240
 ## 
 ## Concordance= 0.661  (se = 0.005 )
-## Likelihood ratio test= 849.8  on 7 df,   p=<2e-16
-## Wald test            = 843  on 7 df,   p=<2e-16
-## Score (logrank) test = 897.4  on 7 df,   p=<2e-16
+## Likelihood ratio test= 866.1  on 12 df,   p=<2e-16
+## Wald test            = 841.2  on 12 df,   p=<2e-16
+## Score (logrank) test = 906.8  on 12 df,   p=<2e-16
 ```
+
+- Question: Does this model indicate that COMPAS is racially biased?
+  - A: Yes
+  - B: No
+  - C: Not Sure
+
+
+- How can we interpret this model?
 
 - Testing proportional hazards assumption
 - Null Hypothesis: Proportional hazards
@@ -1355,10 +1320,10 @@ test.ph
 
 ```
 ##              chisq df      p
-## race          6.68  5 0.2453
-## age           4.59  1 0.0321
-## decile_score  2.93  1 0.0869
-## GLOBAL       18.58  7 0.0096
+## race          6.79  5 0.2367
+## age           4.66  1 0.0308
+## decile_score  2.98  1 0.0841
+## GLOBAL       18.89  7 0.0085
 ```
 
 - Using our knowledge of regression with causation (Bayesian Networks above), how can we determine if the COMPAS algorithm is racially biased?
@@ -1415,7 +1380,7 @@ These notes are based on chapter 9 of Lachin, John M. Biostatistical methods: th
 
 **Conclusion:** In this cohort, additional BPG doses did not affect treatment response. Our data support the current recommendations for the use of a single dose of BPG to treat HIV-infected persons with early syphilis.
 
-[Ganesan, Anuradha, Octavio Mesner, Jason F. Okulicz, Thomas O'Bryan, Robert G. Deiss, Tahaniyat Lalani, Timothy J. Whitman, Amy C. Weintrob, Grace Macalino, and Brian K. Agan. "A single dose of benzathine penicillin G is as effective as multiple doses of benzathine penicillin G for the treatment of HIV-infected persons with early syphilis." Clinical Infectious Diseases 60, no. 4 (2015): 653-660.](https://watermark.silverchair.com/ciu888.pdf?token=AQECAHi208BE49Ooan9kkhW_Ercy7Dm3ZL_9Cf3qfKAc485ysgAAApwwggKYBgkqhkiG9w0BBwagggKJMIIChQIBADCCAn4GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMwIEGpMypn5jNE1PUAgEQgIICT7SGmranIjoV1R-6BesI-zkW5PjaLFd6_Rlbp4FSmXlYnAPBeLUBPrnK02nuRQvdbncvOv8rmyLk1yW-CcdJprxha4Gkpc0vNRRCDQtAEj9LztZR4TuRwzRyhkYV80vnlvatCSODR3v2FyvyhCz4TmLhMwREDnw02GKGKYL0UVgxmJv670Tbh6bR-a4VnKnj6ij_c12ta6NjJD5Q3uLBEWbA3NXbHor0toSznib3o16M_nZpL2C8iyg6riFla_cyPNgrcpBwMyn9wRA5Dr9WEcoumOgrmV7OSnQyrarl_2akpizOiWPA2Aou84ELMPrDZA5LfqDYKyo21Dwx0ghg1OVQ0ooM6o_qXRlNT3fcPIAH5MNLgdsMexr5ResG3egsjQV6rvFJ0sUlKTQ1nxd7y703K_ADWFB-nSpuNiaCevH1zgTsOjqFN45BW_ULb6zCGCo6Hk2OtfJpsVtgM4cob-VNgPy9QFxHUOH7EEUk-CpO5S6U0fdUmYSAC6z_G3CXsBE_y-Y_J70-wee9eZOvk4j8mUsa8dtH0ksh57loH6K0Hpo-8nrERIKgUFaMIOH39dNqE5DS2KOBYOuCjxfDrgoMWS3oBdSsI6PhsSN73NJPahctpAPRb8X04Ku_Z1h-GFvir2sgerKrFfLlptA9c82b-UadNdTmuB2xMkOnv8xnya_jwW0GLuDn0A3JPgEy78JhrLgKaFHj8k15aX0m7-feAkNFdnQgRPgL5-7ftwzvTB4II5ygV5svEuQg05Zh4TDn8dQM0xgml0qzSBOXGw)
+[Ganesan, Anuradha, Octavio Mesner, Jason F. Okulicz, Thomas O'Bryan, Robert G. Deiss, Tahaniyat Lalani, Timothy J. Whitman, Amy C. Weintrob, Grace Macalino, and Brian K. Agan. "A single dose of benzathine penicillin G is as effective as multiple doses of benzathine penicillin G for the treatment of HIV-infected persons with early syphilis." Clinical Infectious Diseases 60, no. 4 (2015): 653-660.](https://academic.oup.com/cid/article/60/4/653/2895840)
 
 Look for in paper:
 
@@ -1435,6 +1400,5 @@ Look for in paper:
 ## High Level Summary
 
 - Always explore the data before running regressions and other statistical tests.  Look at the raw data itself, try to understand variable names, variable distributions, missing data, etc
-- Collider bias occurs when conditioning (including as a covariate) on a variable that is influenced by the outcome variable and at least one other covariate.
 - Survival analysis tools, such as Kaplan-Meier curves and Cox PH regression, are helpful when follow times leading up to an event vary by observation, especially when censoring occurs.
-- When reporting on your analysis, it is important to be aware of possible causal pathways. But, most of the time, it is not possible to use statistical models alone to attribute a causal relationships.
+- It is important to be aware of possible causal pathways. But, most of the time, it is not possible to use statistical models alone to attribute a causal relationships.

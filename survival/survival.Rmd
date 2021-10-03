@@ -395,7 +395,7 @@ $$S(t)=P(T>t)=1-F(t)$$
 \[
 \lambda(t) =\lim_{h\rightarrow 0} P(T\leq t+h | T>t) =\lim_{h\rightarrow 0} \frac{P(t<T\leq t+h)}{P(T>t)}= \frac{f(t)}{S(t)} = -\frac{d\log S(t)}{dt}.
 \]
-- Hazard give the instantaneous probability of an event at time $t$ given survival until time $t$
+- Hazard function gives the instantaneous probability of an event at time $t$ given survival until time $t$
 - Notice that $f(t)=\lambda(t)S(t)$
 - Cumulative hazard function:
 \[
@@ -419,21 +419,36 @@ $$
 
 - Not always possible to wait for an event to occur for each participant before doing the analysis
 
+
 - Cancer study example: participants may drop out of the study before an event is observed or the study may close before each participant experiences an event
+
+
 - This is call right censored data: have start time but end times can either be at event or drop out time
+
+
 - Question: For censored observations, how to make use of time duration without event?
 
-![right censoring image from [here](http://reliawiki.org/index.php/Life_Data_Classification)](./Right_censoring.png)
+
+![Right Censored Data](./censoredData.png)
+
 
 - Model: $f(t|x; \theta)$ with corresponding hazard, $\lambda(t|x;\theta)$, and survival, $S(t|x;\theta)$
 
 - Want $\theta$ to quantify difference in risk (until event) among observations
   - Note: $\theta$ quantifies how fast an event will likely occur for an observation but communicated in terms of risk of event
+
+  
 - Assumption: censoring occurs at random (in independently from $f$)
+
+
 - Censoring cumulative probability distribution model:
 $$G(t;\phi)$$
+
+
 - Corresponding censoring pdf model:
 $$g(t;\phi)$$
+
+
 - Data:
 $$(t_1, \delta_1),\dots, (t_n,\delta_n)$$
 - $t_i$ for $i=1,\dots,n$ is duration of follow-up until either event or censor time
@@ -449,28 +464,55 @@ L(\theta,\phi) &= \prod_{i=1}^n [f(t_i;\theta)[1-G(t_i;\phi)]]^{\delta_i} [g(t_i
 \end{align}
 \]
 
-- Oobserve an event for $i$ ($\delta_i=1$), then $t_i\sim f$ and censoring did not occur prior $[f(t_i;\theta)[1-G(t_i;\phi)]]^{\delta_i}$
+- Observe an event for $i$ ($\delta_i=1$), then $t_i\sim f$ and censoring did not occur prior $[f(t_i;\theta)[1-G(t_i;\phi)]]^{\delta_i}$
+
 
 - Observe censoring for $i$ ($\delta_i=1$), then $t_i\sim g$ and an event did not occur prior $[g(t_i;\phi)S(t_i;\theta)]^{1-\delta_i}$
+
+
 - But, we do not care about the censoring distribution, only the time to event distribution.
+
+
 - Partial likelihood 
 $$L(\theta)=\prod_{i=1}^n [f(t_i;\theta)]^{\delta_i}[S(t_i;\theta)]^{1-\delta_i}= \prod_{i=1}^n \lambda(t_i)^{\delta_i} S(t_i)$$ 
 
 ## Kaplan-Meier Estimator
+
+- Question: Have you heard of/seen Kaplan-Meier Curves before this?
+  - A: Yes
+  - B: No
+
+- Visualize the percent of population surviving until time $t$ as $t$ increases
+
+![KM Curve Example](https://cdn.graphpad.com/faq/1747/images/1747d.gif)
 
 - Consider estimating survival: $S(t) = P(T>t)$ from sample $(t_1, \delta_1),\dots, (t_n,\delta_n)$
 
 - Approximate $S(t)$ as a non-parametric decreasing step function
   - $S(t)$ is proportion of sample that has not experienced an event at time $t$
   - Problem: If $i$ censored prior to $t$, we cannot know if their event occurred before or after $t$
+
 - Order sample by event times $t_i$ where $\delta_i=1$: 
 $$t_{(1)}, t_{(2)}, \dots, t_{(J)}$$
+
+
 - There are only $J$ sample points in time where events occur
+
+
 - Recall conditional probability rule $P(A|B)=\frac{P(A,B)}{P(B)}$
+
+
 - Because $t_{(j)} > t_{(j-1)}$,
 $$S\left(t_{(j)}\right) = P\left(T > t_{(j)}\right) = P\left(T > t_{(j)}, T > t_{(j-1)}\right) = P\left(T > t_{(j)} | T > t_{(j-1)}\right) \times P\left(T > t_{(j-1)}\right)$$
 - Repeating
-$$S\left(t_{(j)}\right) = P\left(T > t_{(j)} | T > t_{(j-1)}\right) \times P\left(T > t_{(j-1)} | T > t_{(j-2)}\right) \times P\left(T > t_{(j-2)}\right)$$
+$$\begin{align*}
+S\left(t_{(j)}\right) 
+&= P\left(T > t_{(j)} | T > t_{(j-1)}\right) \times P\left(T > t_{(j-1)} | T > t_{(j-2)}\right) \times P\left(T > t_{(j-2)}\right) \\
+&= P\left(T > t_{(j)} | T > t_{(j-1)}\right) \times P\left(T > t_{(j-1)} | T > t_{(j-2)}\right) \times\dots\times P\left(T > t_{(2)} | T > t_{(1)}\right) \times P\left(T > t_{(1)}\right)\\
+\end{align*}$$
+
+- This seems [tautological](https://www.merriam-webster.com/dictionary/tautology), but it's helpful here because it allows us to include the censored observations in the denominator appropriately as $t$ increases
+
 - For $j = 1,\dots, J$, the "instantaneous" probability of an event occurring at time $t_j$:
 $$\pi_j = P\left(T \leq t_{(j)} | T > t_{(j-1)}\right) = 1-P\left(T > t_{(j)} | T > t_{(j-1)}\right)$$
 - Then 
@@ -498,7 +540,6 @@ This [video](https://www.youtube.com/watch?v=NDgn72ynHcM) clearly illustrates ho
 
 ```{r km_curve}
 library(survival)
-library(ggfortify)
 
 dat <- read.csv(url('https://raw.githubusercontent.com/propublica/compas-analysis/master/cox-parsed.csv'))
 names(dat)
@@ -507,7 +548,7 @@ dat2 <- dat[dat$end > dat$start,]
 dim(dat2)
 dat3 <- dat2[!duplicated(dat2$id),]
 dim(dat3)
-ph <- dat3[!is.na(dat3$decile_score),]
+ph <- dat3[dat3$decile_score>0,]
 dim(ph)
 ph$t_atrisk <- ph$end - ph$start
 
@@ -526,6 +567,14 @@ plot(fitr, xlab="Time at risk of recidivism in Days",
 legend('bottomleft', legend=levels(as.factor(ph$race)), col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple'), lty=1)
 
 survdiff(survobj~race, data=ph)
+
+ph$compas <- cut(ph$decile_score, breaks=c(0,3,6,10))
+fitc <- survfit(survobj~compas, data=ph)
+plot(fitc, xlab="Time at risk of recidivism in Days", 
+   ylab="% not rearrested", yscale=100,
+   main="Survival Distribution by COMPAS",
+   col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple')) 
+legend('bottomleft', legend=levels(as.factor(ph$compas)), col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple'), lty=1)
 ```
 
 Note: I haven't used this package in a long time so I needed to look how to use the functions in [documentation](https://cran.r-project.org/web/packages/survival/survival.pdf).  As a consultant, you will probably need to read the documentation a lot.
@@ -533,18 +582,34 @@ Note: I haven't used this package in a long time so I needed to look how to use 
 ## Cox proportional hazards model
 
 - Difficult to work with censored data using generalized linear models
-- We can use use Poisson regression, how?
+
+
+- Question: We can use use a GLM here?
+  - A: Yes
+  - B: No
+  - C: Not Sure
+
+
 - Assuming that each individual hazard function is proportional to some common baseline hazard function makes the problem workable:
 \[
 \lambda(t|x_i) = \lambda_0(t) \exp(\beta x_i)
 \]
-where $X_i$ is the covariate vector for participant $i$ and $\beta$ is the parameter vector to be estimated
-- $\lambda_0(t)$ is the hazard function for $x=0$
+where $x_i$ is the covariate vector for participant $i$ and $\beta$ is the parameter vector to be estimated
+
+
+- $\lambda_0(t)$ is the hazard function for $x_i=(0,\dots,0)$
+
+
 - $\exp(\beta x_i)$ explains proportional differences in hazards as $x_i$ changes as in parametric regression
+
+
 - Then the probability that individual $j$ experiences an event at $t_{(j)}$ given survival until $t_{(j)}$ is
 $$\lambda(t_{(j)}|x_{(j)})=\lambda_0(t_{(j)})\exp(x_{(j)}\beta)$$
+
+
 - The total probability within the sample of an event occurring at time $t_{(j)}$ given those who have survived until $t_{(j)}$ is 
 $$\sum_{k: t_k\geq t_{(j)}} \lambda(t_{(j)}|x_k) = \sum_{k: t_k\geq t_{(j)}} \lambda_0(t_{(j)})\exp(x_k\beta)$$
+
 - Then probability of an event occurring at $t_{(j)}$ conditioning on covariates $x_{(j)}$ (the likelihood) is
 $$\begin{align*}
 L_j(\beta) &= P[(j)\text{ fails}|\text{1 failure from those at risk at $t_{(j)}$}]
@@ -552,7 +617,10 @@ L_j(\beta) &= P[(j)\text{ fails}|\text{1 failure from those at risk at $t_{(j)}$
 &= \frac{\lambda(t_{(j)}|x_{(j)})}{\sum_{k: t_k\geq t_{(j)}} \lambda(t_{(j)}|x_k)} = \frac{\lambda_0(t_{(j)})\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \lambda_0(t_{(j)})\exp(x_k\beta)}
 = \frac{\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \exp(x_k\beta)}
 \end{align*}$$
+
+
 - Notice that the baseline hazard function, $\lambda_0(t)$, cancels.  So, now we can use use an optimization technique to maximize this function
+
 - The joint likelihood for the sample is
 $$\tilde L(\beta) = \prod_{j=1}^J L_j(\beta) = \prod_{j=1}^J \frac{\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \exp(x_k\beta)}
 = \prod_{i=1}^n \left[\frac{\exp(x_i\beta)}{\sum_{\ell\in R(t_i)} \exp(x_\ell\beta)}\right]^{\delta_i}$$
@@ -565,22 +633,47 @@ where $R(t) = \left\{\ell: t_\ell \geq t\right\}$
 
 - Maximize the likelihood with Newton-Raphson method
 
+### Is COMPAS racially biased?
+
+- To determine this, we must use interactions
 
 
-```{r phmodel}
-summary(coxph(survobj~race, data=ph))
-summary(coxph(survobj~race+decile_score, data=ph))
-summary(coxph(survobj~race+age+decile_score, data=ph))
-```
+- Let $A$ and $B$ be binary, input variables and $Y$ a continuous outcome
+  - assume linear regression
+
+
+- How do we read the output?
+
+| Variable | Coef | p-value |
+| --- | --- | ---  |
+| A | 1.5 | 0.01 |
+| B | 0.1 | 0.35 |
+| A*B | 0.5 | 0.02 |
+
+- On average, $Y$ increases by 1.5 when $A=1$ compared to $A=0$ while controlling for $B$ and this change is statistically significant at an $\alpha=0.05$ signifiance level
+- There is no evidence to suggest that $B$ is associated with $Y$ (while controlling for $A$)
+- Additionally, $Y$ increases by 0.5 when both $A$ and $B$ are 1
 
 - Changing the baseline race
+  - R uses alphabetical order so African-American (AA) would be the reference group without the `relevel` command
+  - Now, Caucasian (white) is the reference group
+  - In most medical literature, white is the reference racial group, but this has come under some criticism
+  - Here, because AA is of particular interest, we probably don't want AA to be the reference group
+- We divide age by 10 so that we can interpret change in risk per 10 years of age
 
-```{r phmodel2}
+```{r phmodel}
 ph$race = relevel(as.factor(ph$race), ref="Caucasian")
-summary(coxph(survobj~race, data=ph))
-summary(coxph(survobj~race+decile_score, data=ph))
-summary(coxph(survobj~race+age+decile_score, data=ph))
+ph$age10 = ph$age/10
+summary(coxph(survobj~race*decile_score+age10, data=ph))
 ```
+
+- Question: Does this model indicate that COMPAS is racially biased?
+  - A: Yes
+  - B: No
+  - C: Not Sure
+
+
+- How can we interpret this model?
 
 - Testing proportional hazards assumption
 - Null Hypothesis: Proportional hazards
@@ -645,7 +738,7 @@ These notes are based on chapter 9 of Lachin, John M. Biostatistical methods: th
 
 **Conclusion:** In this cohort, additional BPG doses did not affect treatment response. Our data support the current recommendations for the use of a single dose of BPG to treat HIV-infected persons with early syphilis.
 
-[Ganesan, Anuradha, Octavio Mesner, Jason F. Okulicz, Thomas O'Bryan, Robert G. Deiss, Tahaniyat Lalani, Timothy J. Whitman, Amy C. Weintrob, Grace Macalino, and Brian K. Agan. "A single dose of benzathine penicillin G is as effective as multiple doses of benzathine penicillin G for the treatment of HIV-infected persons with early syphilis." Clinical Infectious Diseases 60, no. 4 (2015): 653-660.](https://watermark.silverchair.com/ciu888.pdf?token=AQECAHi208BE49Ooan9kkhW_Ercy7Dm3ZL_9Cf3qfKAc485ysgAAApwwggKYBgkqhkiG9w0BBwagggKJMIIChQIBADCCAn4GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMwIEGpMypn5jNE1PUAgEQgIICT7SGmranIjoV1R-6BesI-zkW5PjaLFd6_Rlbp4FSmXlYnAPBeLUBPrnK02nuRQvdbncvOv8rmyLk1yW-CcdJprxha4Gkpc0vNRRCDQtAEj9LztZR4TuRwzRyhkYV80vnlvatCSODR3v2FyvyhCz4TmLhMwREDnw02GKGKYL0UVgxmJv670Tbh6bR-a4VnKnj6ij_c12ta6NjJD5Q3uLBEWbA3NXbHor0toSznib3o16M_nZpL2C8iyg6riFla_cyPNgrcpBwMyn9wRA5Dr9WEcoumOgrmV7OSnQyrarl_2akpizOiWPA2Aou84ELMPrDZA5LfqDYKyo21Dwx0ghg1OVQ0ooM6o_qXRlNT3fcPIAH5MNLgdsMexr5ResG3egsjQV6rvFJ0sUlKTQ1nxd7y703K_ADWFB-nSpuNiaCevH1zgTsOjqFN45BW_ULb6zCGCo6Hk2OtfJpsVtgM4cob-VNgPy9QFxHUOH7EEUk-CpO5S6U0fdUmYSAC6z_G3CXsBE_y-Y_J70-wee9eZOvk4j8mUsa8dtH0ksh57loH6K0Hpo-8nrERIKgUFaMIOH39dNqE5DS2KOBYOuCjxfDrgoMWS3oBdSsI6PhsSN73NJPahctpAPRb8X04Ku_Z1h-GFvir2sgerKrFfLlptA9c82b-UadNdTmuB2xMkOnv8xnya_jwW0GLuDn0A3JPgEy78JhrLgKaFHj8k15aX0m7-feAkNFdnQgRPgL5-7ftwzvTB4II5ygV5svEuQg05Zh4TDn8dQM0xgml0qzSBOXGw)
+[Ganesan, Anuradha, Octavio Mesner, Jason F. Okulicz, Thomas O'Bryan, Robert G. Deiss, Tahaniyat Lalani, Timothy J. Whitman, Amy C. Weintrob, Grace Macalino, and Brian K. Agan. "A single dose of benzathine penicillin G is as effective as multiple doses of benzathine penicillin G for the treatment of HIV-infected persons with early syphilis." Clinical Infectious Diseases 60, no. 4 (2015): 653-660.](https://academic.oup.com/cid/article/60/4/653/2895840)
 
 Look for in paper:
 
@@ -665,6 +758,5 @@ Look for in paper:
 ## High Level Summary
 
 - Always explore the data before running regressions and other statistical tests.  Look at the raw data itself, try to understand variable names, variable distributions, missing data, etc
-- Collider bias occurs when conditioning (including as a covariate) on a variable that is influenced by the outcome variable and at least one other covariate.
 - Survival analysis tools, such as Kaplan-Meier curves and Cox PH regression, are helpful when follow times leading up to an event vary by observation, especially when censoring occurs.
-- When reporting on your analysis, it is important to be aware of possible causal pathways. But, most of the time, it is not possible to use statistical models alone to attribute a causal relationships.
+- It is important to be aware of possible causal pathways. But, most of the time, it is not possible to use statistical models alone to attribute a causal relationships.
