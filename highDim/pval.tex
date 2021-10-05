@@ -1,0 +1,30 @@
+\documentclass[tikz, border=1mm]{standalone}
+\usepackage{pgfplots}
+\begin{document}
+
+\pgfmathdeclarefunction{gauss}{2}{%
+  \pgfmathparse{1/(#2*sqrt(2*pi))*exp(-((x-#1)^2)/(2*#2^2))}%
+}
+\def\t{-1.9}
+
+\begin{tikzpicture}
+\begin{axis}[
+  no markers, domain=-3.5:3.5, samples=100,
+  y axis line style={draw=none},
+  axis lines*=left, xlabel=$x$, ylabel={$H_0: \mu=0$},
+  every axis y label/.style={at=(current axis.above origin),anchor=south},
+  every axis x label/.style={at=(current axis.right of origin),anchor=west},
+  height=5cm, width=12cm,
+  xticklabels={$T$, 0},
+  xtick={\t, 0}, ytick=\empty,
+  enlargelimits=false, clip=false, axis on top,
+  %grid = none
+  ]
+  \addplot [fill=cyan!20, draw=none, domain=-3.5:\t] {gauss(0,1)} \closedcycle ;
+  \addplot [very thick,cyan!50!black] {gauss(0,1)};
+  \node [pin=140:{$p$-value}] at (axis cs: \t-0.15, 0.01) {};
+
+\end{axis}
+
+\end{tikzpicture}
+\end{document}

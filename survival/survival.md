@@ -421,8 +421,8 @@ Is this the best way to present this information?
 
 ### Bayesian Network 1:
 
-<!--html_preserve--><div id="htmlwidget-e2ad83a6f3898a4144f4" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-e2ad83a6f3898a4144f4">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-26b68a3c4f9a3293bad6" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-26b68a3c4f9a3293bad6">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model: Think of a dataset where $A,B,C$ are collected
 
@@ -513,8 +513,8 @@ Question: Does this coefficient and intercept estimate make sense?
 - b) nope
 
 ### Bayesian Network 2:
-<!--html_preserve--><div id="htmlwidget-4b62417d46d92cf8a65c" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-4b62417d46d92cf8a65c">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-86a7c320b6d9b96e2f10" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-86a7c320b6d9b96e2f10">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -567,8 +567,8 @@ Question: What about this regression model: `C ~ A`?
 - b) $A$ should not be statistically significant
 
 ### Bayesian Network 3:
-<!--html_preserve--><div id="htmlwidget-de3ae73cc2a9a44a9880" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-de3ae73cc2a9a44a9880">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-a2dfdfdc59ba1874db31" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-a2dfdfdc59ba1874db31">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -617,8 +617,8 @@ summary(lm(C~A+B))
 
 ### Bayesian Network 3 (again) with `A` as the outcome:
 
-<!--html_preserve--><div id="htmlwidget-4813d639d6a57cb7f886" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-4813d639d6a57cb7f886">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-6f9dfeddc5c0ecdfc7c5" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-6f9dfeddc5c0ecdfc7c5">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Question: What would a regression model of `A ~ B + C` yield?
 
@@ -691,8 +691,8 @@ summary(lm(A~B))
 - $A$ and $B$ are independent; that is, knowledge of $B$ give no information on the value of $A$. But, additional knowledge of $C$ does give information about the value of $A$.
 
 **Bayesian Network 4**
-<!--html_preserve--><div id="htmlwidget-826f9d4957a3f697c252" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-826f9d4957a3f697c252">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-566127b5017001482f26" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-566127b5017001482f26">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -712,7 +712,7 @@ Question: What would a regression model of `C ~ A + B` yield?
 set.seed(1234)
 size <- 1000
 A <- 6*rnorm(size)+50
-B <- A - 2*rnorm(size) - 25 + rnorm(size)
+B <- A - 25 - 2*rnorm(size)
 C <- -4*A + 5*B + 3 +rnorm(size)
 summary(lm(C~A+B))
 ```
@@ -724,19 +724,19 @@ summary(lm(C~A+B))
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
-## -3.03321 -0.68565  0.01655  0.66794  3.13811 
+## -3.13161 -0.71957  0.03478  0.70215  3.05316 
 ## 
 ## Coefficients:
 ##             Estimate Std. Error  t value Pr(>|t|)    
-## (Intercept)  2.96786    0.43087    6.888    1e-11 ***
-## A           -3.99861    0.01481 -270.015   <2e-16 ***
-## B            4.99813    0.01407  355.283   <2e-16 ***
+## (Intercept)  3.34366    0.47704    7.009 4.41e-12 ***
+## A           -4.01550    0.01692 -237.358  < 2e-16 ***
+## B            5.01845    0.01635  306.907  < 2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 0.9947 on 997 degrees of freedom
-## Multiple R-squared:  0.9937,	Adjusted R-squared:  0.9937 
-## F-statistic: 7.84e+04 on 2 and 997 DF,  p-value: < 2.2e-16
+## Residual standard error: 1.013 on 997 degrees of freedom
+## Multiple R-squared:  0.992,	Adjusted R-squared:  0.9919 
+## F-statistic: 6.153e+04 on 2 and 997 DF,  p-value: < 2.2e-16
 ```
 
 Question: What about this regression model: `C ~ A`?
@@ -755,19 +755,19 @@ summary(lm(C~A))
 ## lm(formula = C ~ A)
 ## 
 ## Residuals:
-##     Min      1Q  Median      3Q     Max 
-## -31.978  -7.970  -0.193   7.748  38.531 
+##      Min       1Q   Median       3Q      Max 
+## -30.7632  -6.7266  -0.2299   6.3962  31.5156 
 ## 
 ## Coefficients:
 ##               Estimate Std. Error t value Pr(>|t|)    
-## (Intercept) -118.00904    2.98084  -39.59   <2e-16 ***
-## A              0.91973    0.05938   15.49   <2e-16 ***
+## (Intercept) -117.61814    2.62464  -44.81   <2e-16 ***
+## A              0.90975    0.05229   17.40   <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 11.23 on 998 degrees of freedom
-## Multiple R-squared:  0.1938,	Adjusted R-squared:  0.193 
-## F-statistic: 239.9 on 1 and 998 DF,  p-value: < 2.2e-16
+## Residual standard error: 9.889 on 998 degrees of freedom
+## Multiple R-squared:  0.2327,	Adjusted R-squared:  0.232 
+## F-statistic: 302.7 on 1 and 998 DF,  p-value: < 2.2e-16
 ```
 
 Question: What about this regression model: `B ~ A + C`?
@@ -789,19 +789,19 @@ summary(lm(B~A+C))
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
-## -0.60913 -0.13557 -0.00193  0.13663  0.60247 
+## -0.61703 -0.13791 -0.00305  0.14136  0.62353 
 ## 
 ## Coefficients:
 ##               Estimate Std. Error t value Pr(>|t|)    
-## (Intercept) -0.7788226  0.0843548  -9.233   <2e-16 ***
-## A            0.8014646  0.0011673 686.578   <2e-16 ***
-## C            0.1985070  0.0005587 355.283   <2e-16 ***
+## (Intercept) -0.9117518  0.0924550  -9.862   <2e-16 ***
+## A            0.8020461  0.0012115 662.016   <2e-16 ***
+## C            0.1971777  0.0006425 306.907   <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 0.1982 on 997 degrees of freedom
-## Multiple R-squared:  0.999,	Adjusted R-squared:  0.999 
-## F-statistic: 5.038e+05 on 2 and 997 DF,  p-value: < 2.2e-16
+## Residual standard error: 0.2007 on 997 degrees of freedom
+## Multiple R-squared:  0.999,	Adjusted R-squared:  0.9989 
+## F-statistic: 4.747e+05 on 2 and 997 DF,  p-value: < 2.2e-16
 ```
 
 ## COMPAS and possible collider bias

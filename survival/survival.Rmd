@@ -321,7 +321,7 @@ Question: What would a regression model of `C ~ A + B` yield?
 set.seed(1234)
 size <- 1000
 A <- 6*rnorm(size)+50
-B <- A - 2*rnorm(size) - 25 + rnorm(size)
+B <- A - 25 - 2*rnorm(size)
 C <- -4*A + 5*B + 3 +rnorm(size)
 summary(lm(C~A+B))
 ```

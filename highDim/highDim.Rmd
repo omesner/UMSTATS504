@@ -9,11 +9,42 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```
 
-## The data: Curing lymphoma
+## Understanding Lymphoma
+
+![Micrograph (Field stain) of a Diffuse Large B-Cell Lymphoma](https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Diffuse_large_B_cell_lymphoma_-_cytology_low_mag.jpg/300px-Diffuse_large_B_cell_lymphoma_-_cytology_low_mag.jpg)
+
+From Wikipedia:
+
 - Diffuse large B-cell lymphoma (DLBCL) is the most common lymphoid malignancy in adults
+
+- Cancer of B cells, a type of lymphocyte
+
+- Incidence: 7-8 cases per 100,000 people per year in the US
+
+- occurs primarily in older individuals, with a median age of diagnosis at ~70 years
+
+- it can occur in young adults and, in rare cases, children
+
+- DLBCL can arise in virtually any part of the body and, depending on various factors, is often a very aggressive malignancy
+
+- The causes of diffuse large B-cell lymphoma are not well understood
+
 - Curable in < 50% of patients (in 2002)
-- This [paper](https://idp.nature.com/authorize/casa?redirect_uri=https://www.nature.com/articles/nm0102-68&casa_token=vw6a-r_uXz8AAAAA:PBI84ZmryGuDsD_exYAi6aTypeES0fxnpFfASvUwbJ7o_Ihb5FsyW_IvxXGlrCj4UlIyydKIpRIbH4rx8A) use a supervised learning model on 6817 gene expressions (microarray) from 71 patients to distinguish between DLBCL and follicular lymphoma (FL).
+
+- Here, we want to use gene expression or *microarray data* to predict DLBCL
+
+- [Microarrays](https://en.wikipedia.org/wiki/Microarray) simultaneously detect the expression of thousands of genes from a sample
+
+![Microarray Data](https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Microarray2.gif/350px-Microarray2.gif)
+
+- This [paper](https://idp.nature.com/authorize/casa?redirect_uri=https://www.nature.com/articles/nm0102-68&casa_token=vw6a-r_uXz8AAAAA:PBI84ZmryGuDsD_exYAi6aTypeES0fxnpFfASvUwbJ7o_Ihb5FsyW_IvxXGlrCj4UlIyydKIpRIbH4rx8A) use a supervised learning model on 6817 gene expressions (microarray) from 71 patients to distinguish between DLBCL and follicular lymphoma (FL)
+
 - This data is on [Github](https://github.com/ramhiser/datamicroarray/wiki/Shipp-%282002%29)
+
+- In this data, each row corresponds to an individual
+
+- Each column corresponds to gene expression using a microarray, one column gives the type of lymphoma
+
 
 ```{r data}
 load("./shipp.RData")
@@ -25,20 +56,37 @@ shipp$x[1:10,1:6]
 table(shipp$y)
 ```
 
+- Note that there are far more columns than rows here
+  - So standard regression methods will not work
+
+
+- Question: Should we use a t-test to determine which genes are associated with DLBCL?
+  - A: Yes
+  - B: No
+  - C: Not Sure
+
 ```{r naiveMultiple}
 pvals <-c()
 for(var in names(shipp$x)){
   pvals <- c(pvals, t.test(shipp$x[[var]] ~ shipp$y)$p.value)
 }
 hist(pvals)
+sum(pvals < 0.05)
 sum(pvals < 0.05)/length(pvals) # pct significant at alpha = 0.05
 ```
 
+
+- Question: Do you believe that all tests with p < 0.05 are actually statistically significant?
+  - A: Yes
+  - B: No
+  - C: Not Sure
+
 **Multiple testing error**
 
-What would we get if none were significant?
+- What would we get if none were significant?
 
-The data below are generated randomly and independent from the outcome
+- The data below are generated randomly and independent from the outcome
+  - That is, we randomly generate data without using the outcome, so we know, theoretically that each column of generated data is independent from the outcome
 
 ```{r null}
 set.seed(1234)
@@ -52,37 +100,69 @@ hist(null_pvals)
 sum(null_pvals < 0.05)/length(null_pvals) # pct significant at alpha = 0.05
 ```
 
+
+- Question: Did you expect that 5% of p-values < 0.05?
+  - A: Yes
+  - B: No
+  - C: Not Sure
+
 - Intuitively, what is the problem here?  Why are so many p-values $<0.05$ when none are associated with the outcome?
+
+- Question: Did you expect the p-values to have a uniform distribution?
+  - A: Yes
+  - B: No
+  - C: Not Sure
+
+
 - Why do they look uniform?
 
-**Theorem:** p-values are uniformly distributed under the null hypothesis.
+**What is a hypothesis test/p-value?**
+
+- Example:
+
+  - Let $X_1, X_2,\dots, X_n$ be an independent, identically distributed sample 
+
+  - Let $E[X_i]=\mu$ (unknown) and $E[(X_i-\mu)^2]=\sigma^2=1$ (known) for each $i=1,2,\dots,n$
+  
+  - Let $\bar X_n = \frac{1}{n}\sum_{i=1}^n X_i$
+  - Is $\mu< 0$?
+  - Let $H_0: \mu\geq0$ and $H_1: \mu< 0$
+  - Intuitively, if $\frac{\bar X_n -\mu}{\sigma/\sqrt n} = \sqrt n \bar X$ is too big, then we can reject $H_0$
+  - From the [central limit theorem](https://en.wikipedia.org/wiki/Central_limit_theorem), we know that $\frac{\bar X_n -\mu}{\sigma/\sqrt n} \leadsto N(0,1)$ (converges in distribution) as $n\rightarrow\infty$
+  - That is, our test statistic, $T=\sqrt n \bar X$ is approximately $N(0,1)$ under $H_0$ (we're setting $\mu=0$)
+  - p-value: $p\approx P[T<N(0,1)] = \Phi(T) = \int_{-\infty}^T \frac{1}{\sqrt{2\pi}} e^{-\frac{x^2}{2}}dx$
 
 ![p-value illustration](./pval.png)
 
-[image from here](http://blog.analytics-toolkit.com/2017/statistical-significance-ab-testing-complete-guide/)
+[other illustration](http://blog.analytics-toolkit.com/2017/statistical-significance-ab-testing-complete-guide/)
+
+**Theorem:** p-values are uniformly distributed under the null hypothesis.
 
 *Proof:*
 
-First, notice that a random variable $Y$ is uniformly distributed on $[0,1]$ iff $P[Y < y] = y$ on $[0,1]$.  So, we will try to show that $P[ \text{p-value} < y] = y$ under the null hypothesis.
+1. Let $T$ be a test statistic of a hypothesis test and let $F$ be the CDF of T under $H_0$, the null hypothesis
 
-Second, note that if $X \sim F$ (random variable $X$ distributed according to $F(x) = P(X < x)$) be a continuous random variable, then $F(X) \sim \text{Unif}(0,1)$.
-Because $X$ is continuous, $F$ must be monotone and therefore has inverse function $F^{-1}$.
+2. p-value: $p= F(T)$
+
+3. Claim: $Y$ is uniformly distributed on $[0,1]$ $\Leftrightarrow$ $P[Y < y] = G(y) = y$ on $[0,1]$
+
+4. Goal: show that $P[p < y] = y$ under the null hypothesis
+
+5. Using $F^{-1}$, the inverse function of $F$,
 \[
 \begin{align*}
-P[F(X) < y]
-&= P[F^{-1}(F(X)) < F^{-1}(y)] \\
-&= P(X < F^{-1}(y)) \\
+P[F(T) < y]
+&= P[F^{-1}(F(T)) < F^{-1}(y)] \\
+&= P(T < F^{-1}(y)) \\
 &= F(F^{-1}(y)) \\
 &= y
 \end{align*}
 \]
-This indicates that $F(X) \sim \text{Unif}(0,1)$ for any random variable.
 
-Third, let $T$ be a test statistics with a CDF of $G$ under the null.
-The $\text{p-value} = G(T)$.
-So, under the null hypothesis, p-value $\sim$Unif(0,1).
+6. So, under the null hypothesis, p-value $\sim$Unif(0,1) $\blacksquare$
 
-$\blacksquare$
+- Question: Did this proof make sense?
+  - 1 (not at all) to 10 (perfect sense)
 
 ## Multiple Testing
 
