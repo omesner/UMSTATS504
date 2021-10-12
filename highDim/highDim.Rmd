@@ -123,11 +123,10 @@ sum(null_pvals < 0.05)/length(null_pvals) # pct significant at alpha = 0.05
   - Let $X_1, X_2,\dots, X_n$ be an independent, identically distributed sample 
 
   - Let $E[X_i]=\mu$ (unknown) and $E[(X_i-\mu)^2]=\sigma^2=1$ (known) for each $i=1,2,\dots,n$
-  
-  - Let $\bar X_n = \frac{1}{n}\sum_{i=1}^n X_i$
   - Is $\mu< 0$?
   - Let $H_0: \mu\geq0$ and $H_1: \mu< 0$
-  - Intuitively, if $\frac{\bar X_n -\mu}{\sigma/\sqrt n} = \sqrt n \bar X$ is too big, then we can reject $H_0$
+  - Let $\bar X_n = \frac{1}{n}\sum_{i=1}^n X_i$
+  - Intuitively, if $\frac{\bar X_n -\mu}{\sigma/\sqrt n} = \sqrt n \bar X$ is too small, then we can reject $H_0$
   - From the [central limit theorem](https://en.wikipedia.org/wiki/Central_limit_theorem), we know that $\frac{\bar X_n -\mu}{\sigma/\sqrt n} \leadsto N(0,1)$ (converges in distribution) as $n\rightarrow\infty$
   - That is, our test statistic, $T=\sqrt n \bar X$ is approximately $N(0,1)$ under $H_0$ (we're setting $\mu=0$)
   - p-value: $p\approx P[T<N(0,1)] = \Phi(T) = \int_{-\infty}^T \frac{1}{\sqrt{2\pi}} e^{-\frac{x^2}{2}}dx$
@@ -167,6 +166,7 @@ P[F(T) < y]
 ## Multiple Testing
 
 - Want to run $m$ tests
+
 - Let $H_{0,i}$ be the null hypothesis for the $i$th test where $1 \leq i \leq m$
 - Let $p_i$ be the p-value of the $i$th test for $H_{0,i}$
 - Let $R_i = 1$ if we reject $H_{0,i}$ and $R_i = 0$ if we fail to reject $H_{0,i}$ (sometimes called a discovery or positive result)
@@ -302,6 +302,7 @@ abline(c(0,0), c(1,1))
 \[T_m = \sup_{t\in [0,1]} \left| \hat F_m(t) - t \right|\]
 - Using Hoeffding's inequality,
 \[P\left[ T_m > t \right] \leq 2\exp\left(-2t^2\right)\]
+- Note: here so do not know the CDF of the test statistic, but we *consentration inequality* above allows us to bound the $p$-value
 - Reject global null if
 \[T_m > \sqrt{\frac{2\log(\frac{2}{\alpha})}{2}}\]
 
@@ -371,13 +372,31 @@ digraph G {
 ```
 
 - What about something more complex?
-  - pink and red variables will be associated with Outcome
-  - D and G are sufficient for prediction
-  - if D and G are used, other variables provide no additional accuracy
-  - regression takes this into account
-  - $\beta = [\beta_A, \beta_B, \beta_C, \beta_D, \beta_E,\beta_F, \beta_G, \beta_H, \beta_Q, \beta_R,\beta_S, \beta_T] = [0,0,0,\beta_D,0,0, \beta_G, 0,0,0,0,0]$ where $\beta_D,\beta_G\neq 0$
-  - $\{\beta_D,\beta_G\}$ is the *active* set
-  - What should the active set be if $G$ were missing?
+
+- Question: Should $D$ in the model below associated with Outcome?
+  - A: Yes
+  - B: No
+  
+- Question: Should $A$ in the model below associated with Outcome?
+  - A: Yes
+  - B: No
+  
+- Question: Should $Q$ in the model below associated with Outcome?
+  - A: Yes
+  - B: No
+  
+- Question: In a regression model (Outcome ~ A+B+C+D+E+F+G+H+Q+R+S+T), which variables should be associated/significant?
+  - A: Red Only
+  - B: Pink Only
+  - C: Red and Pink Only
+  - D: All Variables
+  
+- Question: In a regression model (Outcome ~ A+B+C+E+F+G+H+Q+R+S+T, D is removed), which variables should be associated/significant?
+  - A: G only
+  - B: A and G only
+  - C: A, E, and G only
+  - D: A, B, E, and G only
+  
 
 ```{dot complex, echo=FALSE, out.width = '50%'}
 digraph G {
@@ -406,7 +425,14 @@ digraph G {
 }
 ```
 
-
+- pink and red variables will be associated with Outcome
+- D and G are sufficient for prediction
+- if D and G are used, other variables provide no additional accuracy
+- regression takes this into account
+- $\beta = [\beta_A, \beta_B, \beta_C, \beta_D, \beta_E,\beta_F, \beta_G, \beta_H, \beta_Q, \beta_R,\beta_S, \beta_T] = [0,0,0,\beta_D,0,0, \beta_G, 0,0,0,0,0]$ where $\beta_D,\beta_G\neq 0$
+- $\{\beta_D,\beta_G\}$ is the *active* set
+- What should the active set be if $G$ were missing?
+  
 ## Penalized Regression
 
 **Ordinary least squares**
@@ -432,10 +458,23 @@ y_n
 \end{bmatrix}
 \]
 so that 
-\[\hat\beta = \text{arg} \min_\beta \left| \mathbf{y} - \mathbf{X}\mathbf{\beta}\right|\]
+\[\hat\beta = \text{arg} \min_\beta \left\| \mathbf{y} - \mathbf{X}\mathbf{\beta}\right\|_2^2\]
+
+Note: The Euclidean norm, $\|x\|_2=\sqrt{x_1^2+x_2^2+\cdots+x_p^2} = \sqrt{x^Tx}$ for $x\in \mathbb{R}^p$
 
 Using calculus, it's easy to show that
 \[\hat \beta = \left(\mathbf X^T \mathbf X\right)^{-1} \mathbf X^T \mathbf y\]
+
+Proof:
+Taking the gradient (derivative with respect to vector) and setting it equal to zero,
+\begin{align}
+\frac{\partial}{\partial\beta} \left\|\mathbf{y} - \mathbf{X}\mathbf{\beta}\right\|_2^2 
+&= \frac{\partial}{\partial\beta} (\mathbf{y}-\mathbf{X}\beta)^T(\mathbf{y}-\mathbf{X}\beta)\\
+&= \frac{\partial}{\partial\beta} \mathbf{y}^T\mathbf{y} -\frac{\partial}{\partial\beta}2\mathbf y^T\mathbf X\beta + \frac{\partial}{\partial\beta}\beta^TX^TX\beta \\
+&= -2\mathbf y\mathbf X + 2\mathbf X^T\mathbf X\beta = 0~.
+\end{align}
+
+Solving for zero, we get the solution above.
 
 OLS Pros:
 
@@ -449,13 +488,27 @@ OLS Cons:
 
 **Ridge Regression**
 
-\[\hat\beta = \text{arg} \min_\beta \frac{1}{n}\sum_{i=1}^n\left( y_i - X_i^T\mathbf{\beta}\right)^2 + \lambda\|\beta\|_2^2\]
-
-Note: The Euclidean norm, $\|x\|_2=\sqrt{x_1^2+x_2^2+\cdots+x_p^2}$ for $x\in \mathbb{R}^p$
+\[\hat\beta = \text{arg} \min_\beta \frac{1}{n}\sum_{i=1}^n\left\| y_i - X_i^T\mathbf{\beta}\right\|^2 + \lambda\|\beta\|_2^2\]
 
 Similar to OLS, $\hat \beta$ also has a closed form
 \[\hat \beta = \left(\mathbf X^T \mathbf X + \lambda I \right)^{-1} \mathbf X^T \mathbf y\]
 where $I$ is the identity matrix
+
+Proof:
+Taking the gradient (derivative with respect to vector) and setting it equal to zero,
+\begin{align}
+\frac{\partial}{\partial\beta} \left[\left\|\mathbf{y} - \mathbf{X}\mathbf{\beta}\right\|^2 +\lambda\|\beta\|_2^2\right]
+&= \frac{\partial}{\partial\beta} \left[(\mathbf{y}-\mathbf{X}\beta)^T(\mathbf{y}-\mathbf{X}\beta) +\lambda\beta^T\beta\right]\\
+&= \frac{\partial}{\partial\beta} \mathbf{y}^T\mathbf{y} -\frac{\partial}{\partial\beta}2\mathbf y^T\mathbf X\beta + \frac{\partial}{\partial\beta}\beta^TX^TX\beta +\frac{\partial}{\partial\beta}\lambda\beta^T\beta\\
+&= -2\mathbf y\mathbf X + 2\mathbf X^T\mathbf X\beta +2\lambda\beta = 0~.
+\end{align}
+
+Solving for zero, we get the solution above.
+
+### Using `GLMNET`
+
+- Below: create a dataset where 10 variable are associated with the outcome and 20 are not
+- We are choosing the true $\beta$ randomly from a uniform distribution
 
 ```{r ridge}
 ### Generating data
