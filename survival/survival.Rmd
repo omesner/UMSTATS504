@@ -672,6 +672,8 @@ summary(coxph(survobj~race*decile_score+age10, data=ph))
   - B: No
   - C: Not Sure
 
+- An interpretation: 
+  Compared to Caucasians, a unit increase in the COMPAS decile score for African-Americans corresponds to a decrease in risk of recidivism by a factor of 0.97; this figure is borderline significant (p=0.0715). Said differently, among African-Americans and Caucasians with similar COMPAS scores, African-Americans, on average, have a 3% lower risk of recidivism compared to Caucasians. This indicates that COMPAS may be assigning higher scores to African-American than to Caucasians with a similar risk of recidivism. Asians, on the other hand, were assigned lower scores than Caucasians with a similar risk of recidivism (p=0.0128). There were no differences between other racial groups and Caucasians.
 
 - How can we interpret this model?
 
