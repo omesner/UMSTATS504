@@ -149,40 +149,107 @@ summary(lm(Y~X+C))
 - [Sampling Bias](https://en.wikipedia.org/wiki/Sampling_bias) occurs when sample is collected in such a way that some members of the intended population have a lower or higher sampling probability than others.
 - Sampling bias can lead to incorrect estimates when variables of interest influence sampling
 - Example: In 1936, the American Literary Digest sent out two million surveys to its readers and predicted that Alf Landon would beat incumbent president, Franklin Roosevelt, by a landslide, but the opposite happened.  This was because readers over-represented Republicans.
-- Example: good looking people are jerks (note: this is example is made up but hopefully memorable)
+- [Example](https://catalogofbias.org/biases/collider-bias/): A researcher analysed data from 257 hospitalized individuals and detected an association between locomotor disease and respiratory disease (odds ratio 4.06).  The researcher repeated the analysis in a sample of 2783 individuals from the general population and found no association (odds ratio 1.06)
 
 ```{r sampleBias}
 size <- 100
-looks <- 10*runif(size)
-nice <- 10*runif(size)
-relationship <- ifelse(rbinom(size, 1, (looks+nice)/20)==1, 'in relationship', 'single')
-df_all <- data.frame(looks, nice, relationship)
+locomotor <- 10*runif(size)
+respiratory <- 10*runif(size)
+hospitalized <- rbinom(size, 1, (locomotor+respiratory)/20)==0
+df_all <- data.frame(locomotor, respiratory, hospitalized)
 library(ggplot2)
-ggplot(df_all[relationship=='single',], aes(nice, looks)) + geom_point() + 
+ggplot(df_all[hospitalized==TRUE,], aes(respiratory, locomotor)) + geom_point() + 
   geom_smooth(method = lm, se = FALSE)
 ```
 
 ```{r noSampBias}
-ggplot(df_all, aes(nice, looks)) + geom_point(aes(color=relationship)) +
+ggplot(df_all, aes(respiratory, locomotor)) + geom_point(aes(color=hospitalized)) +
   stat_smooth(method=lm, se=FALSE)
 ```
 
 - Sampling bias is an example of collider bias
-- Here we are conditioning on relationship status
-- Even though looks and jerk are independent, conditioning on a collider induces an association
+- Here we are conditioning on hospitalization
+- Even though locomotor and respiratory are independent, conditioning on a collider induces an association
 - Conditioning on a collider "open" an association pathway
 
 ```{dot sampleCollider, out.width = "30%", echo=FALSE}
 digraph G {
-  Looks -> Relationship 
-  Nice -> Relationship
-  Relationship -> Sampling
+  locomotor -> hospitalized
+  respiratory -> hospitalized
+  hospitalized -> Sampling
 }
 ```
 
+### Statistical Dependency and Causation
+
+- If $A$ and $B$ are random variables and associated (dependent) $A\not\perp B$, it's thought that there are 3 ways this can happen
+  - Direct causation: 
+  ```{dot, out.width = "10%", echo=FALSE}
+digraph G {
+  A -> B
+}
+  ``` 
+  OR
+  ```{dot, out.width = "10%", echo=FALSE}
+digraph G {
+  B -> A
+}
+  ```
+  - $A$ and $B$ are unmeasured confounding:
+  ```{dot, out.width = "20%", echo=FALSE}
+digraph G {
+  Confounder -> A
+  Confounder -> B
+}
+  ```
+  - Collider bias: $A$ and $B$ both influence sampling
+  ```{dot, out.width = "20%", echo=FALSE}
+digraph G {
+  A -> Sampling
+  B -> Sampling
+}
+  ```
+  
+  - If we only have data for $A$ and $B$, we cannot distinguish between these case without more assumptions
+
+- If there are more variables, we figure out more using conditional independence
+  - Thinking about if knowing one variable gives information another
+  - Variables: Drank too much alcohol last night, Woke up with a hangover, Woke up with shoes on
+  
+  ```{dot, out.width = "30%", echo=FALSE}
+digraph G {
+  Alcohol -> Hangover
+  Alcohol -> Shoes
+}
+  ```
+  
+  - Hangover$\perp$Shoes?
+  - Hangover$\perp$Shoes$|$Alcohol?
+    - Given that someone drank too much alcohol last night, does knowing that they woke up with their shoes on give any information about if they have a hangover?
+    
+  - Variables: Burglary, Earthquake, Home motion detector
+  
+  ```{dot, out.width = "30%", echo=FALSE}
+digraph G {
+  Burglary -> Detector
+  Earthquake -> Detector
+}
+  ```
+
+    - Burglary$\perp$Earthquake 
+    - Burglary$\perp$Earthquake$|$Detector?
+      - Given that the home motion detector alerted, does knowing that there was no earthquake give any information about a burglary?
+
+| Structure | Path type | $A,C$ independent/dependent?  | $A,C$ conditionally independent/dependent given $B$ |
+| --- | --- | --- | --- |
+| Chain | $A \rightarrow B \rightarrow C$  | $A\not\perp C$ | $A\perp C|B$ |
+| Other Chain | $A \leftarrow B \leftarrow C$ | $A\not\perp C$  | $A\perp C|B$ |
+| Fork (Confounder) | $A \leftarrow B \rightarrow C$ |  $A\not\perp C$ |  $A\perp C|B$ |
+| Collider | $A \rightarrow B \leftarrow C$ | $A\perp C$ | $A\not\perp C|B$ |
+
+
 ## Prediction, GLMs, and Causal Inference
 
-- So far in this topic, we have focused on inference but not prediction
 - The goals are usually for GLMs and causal inference models are similar in practice:
   - control for variables to approximate the causal influence of variables of interest
   - if model assumptions are satisfied (linearity, no latent confounding, etc), standard GLMs will give causal parameter estimates
@@ -228,165 +295,6 @@ digraph G {
 
 In the image above, the Markov Blanket of $A$ is the set of white variable within the large circle
 
-## Graphical Causal Models and D-separation
-
-- Researchers frequently use *directed acyclic graphs* (DAG) to visualize causal relationships between variables in a dataset
-  - directed - all edges in graph have direction (all edges are arrows)
-  - acyclic - arrow directions do not create a loop
-  - DAGs are sometimes called Bayesian networks
-- DAG below
-  - A, B, C, D, E, F, G, H, I represent variables in a dataset
-  - Arrows indicate a direct causal relationship
-  - A is the *parent* of D
-  - D is the *child* of A
-  - B is the *ancestor* of I
-  - I is the *successor* of B
-
-```{dot networkex, out.width = "50%", echo=FALSE}
-digraph G {
-  A -> D
-  A -> E
-  B -> E
-  C -> G
-  D -> H
-  E -> G
-  F -> G
-  F -> I
-  G -> H
-  G -> I
-}
-```
-
-- Here: we are interested in paths between variables
-  - Note: paths can have arrows pointing either direction
-  - One path between D and F is
-  \[D\leftarrow A\rightarrow E \rightarrow G \leftarrow F\]
-  - Another is 
-  \[D \rightarrow H \leftarrow G \rightarrow I \leftarrow F\]
-  - These are of interest if we want to know if D and F are associated or causally linked
-- Somewhat technical assumptions: in general assume arrows between nodes indicate a causal relationship
-- Text on [Probabilistic Graphical Models](https://mitpress.mit.edu/books/probabilistic-graphical-models) for more detail
-  
-**Factorization and conditional independence**
-
-- In causal inference we frequently want to isolate the average causal effect between two variables given some knowledge of the surrounding Bayesian network, i.e. potential confounders or colliders
-- In reality we rarely know the Bayesian structure of a dataset, but these concepts help inform causal inference.
-
-```{dot simplenetwork, out.width = "30%", echo=FALSE}
-digraph G{
-  A -> B
-  B -> D
-  C -> D
-  C -> E
-}
-```
-
-- Joint distribution can factored as
-  \[P(A, B, C, D, E) = P(A) P(B|A) P(C) P(D|B,C) P(E|C)\]
-- DAGs give information about conditional independence relationships among variables
-- This DAG has one path from A to E: $A \rightarrow B \rightarrow D \leftarrow C \rightarrow E$
-- How can we use this DAG to determine statistical associations between variables/nodes?
-- With 3 nodes:
-  - Chain: $A \rightarrow B \rightarrow C$
-  - Other Chain: $A \leftarrow B \leftarrow C$
-  - Fork: $A \leftarrow B \rightarrow C$
-  - Collider: $A \rightarrow B \leftarrow C$
-
-
-| Structure | Path type | $A,C$ independent/dependent?  | $A,C$ conditionally independent/dependent given $B$ |
-| --- | --- | --- | --- |
-| Chain | $A \rightarrow B \rightarrow C$  | $A\not\perp C$ | $A\perp C|B$ |
-| Other Chain | $A \leftarrow B \leftarrow C$ | $A\not\perp C$  | $A\perp C|B$ |
-| Fork (Confounder) | $A \leftarrow B \rightarrow C$ |  $A\not\perp C$ |  $A\perp C|B$ |
-| Collider | $A \rightarrow B \leftarrow C$ | $A\perp C$ | $A\not\perp C|B$ |
-
-  
-- Questions:
-  1. Are A and B associated?
-  2. Are A and D associated?
-  3. Are D and E associated?
-  4. Are B and C associated?
-  5. Are A and E associated?
- 
- Rule: If a path has no colliders, then yes and we say that the path is open.
- If there is a collider on the path, then no and we say that the path is blocked
- 
-- What out conditioning?
-- Questions:
-  6. Are A and D associated given B?
-  7. Are D and E associated given C?
-  8. Are B and C associated given D?
-  9. Are A and C associated given D?
-  10. Are A and E associated given D?
-  11. Are A and E associated given B?
-  12. Are A and E associated given B, D?
-  
-  Rule: Conditioning on a collider opens a path.
-  Conditioning on a non-collider blocks a path
-  
-- Note: A variable/node and be a collider on one path but not on another.
-
-How can we show that if $D \leftarrow C \rightarrow E$ then $D \perp E | C$?
-
-- $D \perp E | C$ if and only if $P(D,E | C) = P(D|C) P(E|C)$
-\[P(D,E|C) = \frac{P(D,E,C)}{P(C)} = \frac{P(C)P(D|C)P(E|C)}{P(C)} = P(D|C)P(E|C)\]
-
-What about $A \rightarrow B \rightarrow C$?
-
-**Markov Assumption**
-
-```{dot markov, out.width = "20%", echo=FALSE}
-digraph G{
-  Study -> Sleep
-  Study -> Score
-  Sleep -> Score
-}
-```
-
-- We are implicitly using the Markov assumption here
-- Specifically, we are assuming different paths won't perfectly cancel out
-  - I want a good score on my test so I continue studying
-  - With the additional studying, I sleep less
-  - With less sleep, my performance isn't as good
-  - With the extra studying, I know the material better
-  - Can my lack of sleep and extra studying perfectly cancel out?
-  - Markov assumption says no
-  
-**Regression with knowledge of causal structure**
-
-```{dot regnetwork, out.width = "30%", echo=FALSE}
-digraph G{
-  A -> M1
-  M1 -> M2
-  M2 -> Y
-  A -> Y
-  C1 -> C2
-  C1 -> C3
-  C2 -> A
-  C3 -> Y
-  A -> D1
-  D1 -> D2
-  Y -> D3
-  D3 -> D2
-}
-```
-
-- We want to isolate the causal effect of A on Y
-- Assume there are no other relevant variable other than what is in the DAG
-- Which variables need to be taken into account and which should be avoided?
-
-```{dot hardexample, out.width = "30%", echo=FALSE}
-digraph G{
-  A -> Y
-  C1 -> A
-  C1 -> Y
-  C2 -> A
-  C3 -> Y
-  C2 -> C1
-  C3 -> C1
-}
-```
- 
  
 ## Evaluating Work Training Programs
 
@@ -721,3 +629,162 @@ digraph G {
   - rely on intuition about causation
   - use your understanding of causal modeling to answer the question
 
+## Graphical Causal Models and D-separation
+
+- Researchers frequently use *directed acyclic graphs* (DAG) to visualize causal relationships between variables in a dataset
+  - directed - all edges in graph have direction (all edges are arrows)
+  - acyclic - arrow directions do not create a loop
+  - DAGs are sometimes called Bayesian networks
+- DAG below
+  - A, B, C, D, E, F, G, H, I represent variables in a dataset
+  - Arrows indicate a direct causal relationship
+  - A is the *parent* of D
+  - D is the *child* of A
+  - B is the *ancestor* of I
+  - I is the *successor* of B
+
+```{dot networkex, out.width = "50%", echo=FALSE}
+digraph G {
+  A -> D
+  A -> E
+  B -> E
+  C -> G
+  D -> H
+  E -> G
+  F -> G
+  F -> I
+  G -> H
+  G -> I
+}
+```
+
+- Here: we are interested in paths between variables
+  - Note: paths can have arrows pointing either direction
+  - One path between D and F is
+  \[D\leftarrow A\rightarrow E \rightarrow G \leftarrow F\]
+  - Another is 
+  \[D \rightarrow H \leftarrow G \rightarrow I \leftarrow F\]
+  - These are of interest if we want to know if D and F are associated or causally linked
+- Somewhat technical assumptions: in general assume arrows between nodes indicate a causal relationship
+- Text on [Probabilistic Graphical Models](https://mitpress.mit.edu/books/probabilistic-graphical-models) for more detail
+  
+**Factorization and conditional independence**
+
+- In causal inference we frequently want to isolate the average causal effect between two variables given some knowledge of the surrounding Bayesian network, i.e. potential confounders or colliders
+- In reality we rarely know the Bayesian structure of a dataset, but these concepts help inform causal inference.
+
+```{dot simplenetwork, out.width = "30%", echo=FALSE}
+digraph G{
+  A -> B
+  B -> D
+  C -> D
+  C -> E
+}
+```
+
+- Joint distribution can factored as
+  \[P(A, B, C, D, E) = P(A) P(B|A) P(C) P(D|B,C) P(E|C)\]
+- DAGs give information about conditional independence relationships among variables
+- This DAG has one path from A to E: $A \rightarrow B \rightarrow D \leftarrow C \rightarrow E$
+- How can we use this DAG to determine statistical associations between variables/nodes?
+- With 3 nodes:
+  - Chain: $A \rightarrow B \rightarrow C$
+  - Other Chain: $A \leftarrow B \leftarrow C$
+  - Fork: $A \leftarrow B \rightarrow C$
+  - Collider: $A \rightarrow B \leftarrow C$
+
+
+| Structure | Path type | $A,C$ independent/dependent?  | $A,C$ conditionally independent/dependent given $B$ |
+| --- | --- | --- | --- |
+| Chain | $A \rightarrow B \rightarrow C$  | $A\not\perp C$ | $A\perp C|B$ |
+| Other Chain | $A \leftarrow B \leftarrow C$ | $A\not\perp C$  | $A\perp C|B$ |
+| Fork (Confounder) | $A \leftarrow B \rightarrow C$ |  $A\not\perp C$ |  $A\perp C|B$ |
+| Collider | $A \rightarrow B \leftarrow C$ | $A\perp C$ | $A\not\perp C|B$ |
+
+  
+- Questions:
+  1. Are A and B associated?
+  2. Are A and D associated?
+  3. Are D and E associated?
+  4. Are B and C associated?
+  5. Are A and E associated?
+ 
+ Rule: If a path has no colliders, then yes and we say that the path is open.
+ If there is a collider on the path, then no and we say that the path is blocked
+ 
+- What out conditioning?
+- Questions:
+  6. Are A and D associated given B?
+  7. Are D and E associated given C?
+  8. Are B and C associated given D?
+  9. Are A and C associated given D?
+  10. Are A and E associated given D?
+  11. Are A and E associated given B?
+  12. Are A and E associated given B, D?
+  
+  Rule: Conditioning on a collider opens a path.
+  Conditioning on a non-collider blocks a path
+  
+- Note: A variable/node and be a collider on one path but not on another.
+
+How can we show that if $D \leftarrow C \rightarrow E$ then $D \perp E | C$?
+
+- $D \perp E | C$ if and only if $P(D,E | C) = P(D|C) P(E|C)$
+\[P(D,E|C) = \frac{P(D,E,C)}{P(C)} = \frac{P(C)P(D|C)P(E|C)}{P(C)} = P(D|C)P(E|C)\]
+
+What about $A \rightarrow B \rightarrow C$?
+
+**Markov Assumption**
+
+```{dot markov, out.width = "20%", echo=FALSE}
+digraph G{
+  Study -> Sleep
+  Study -> Score
+  Sleep -> Score
+}
+```
+
+- We are implicitly using the Markov assumption here
+- Specifically, we are assuming different paths won't perfectly cancel out
+  - I want a good score on my test so I continue studying
+  - With the additional studying, I sleep less
+  - With less sleep, my performance isn't as good
+  - With the extra studying, I know the material better
+  - Can my lack of sleep and extra studying perfectly cancel out?
+  - Markov assumption says no
+  
+**Regression with knowledge of causal structure**
+
+```{dot regnetwork, out.width = "30%", echo=FALSE}
+digraph G{
+  A -> M1
+  M1 -> M2
+  M2 -> Y
+  A -> Y
+  C1 -> C2
+  C1 -> C3
+  C2 -> A
+  C3 -> Y
+  A -> D1
+  D1 -> D2
+  Y -> D3
+  D3 -> D2
+}
+```
+
+- We want to isolate the causal effect of A on Y
+- Assume there are no other relevant variable other than what is in the DAG
+- Which variables need to be taken into account and which should be avoided?
+
+```{dot hardexample, out.width = "30%", echo=FALSE}
+digraph G{
+  A -> Y
+  C1 -> A
+  C1 -> Y
+  C2 -> A
+  C3 -> Y
+  C2 -> C1
+  C3 -> C1
+}
+```
+ 
