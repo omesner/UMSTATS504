@@ -1,13 +1,15 @@
 ---
-title: "Survival Analysis, Algorithmic Fairness, and COMPAS Recidivism Algorithm Case Study"
+title: Survival Analysis, Algorithmic Fairness, and COMPAS Recidivism Algorithm Case
+  Study
 author: "Octavio Mesner"
-
-output: 
+output:
   html_document:
-    keep_md: true
-header-includes: 
-  - \usepackage{tikz}
-  - \usepackage{pgfplots}
+    keep_md: yes
+  pdf_document: default
+always_allow_html: true
+header-includes:
+- \usepackage{tikz}
+- \usepackage{pgfplots}
 ---
 
 
@@ -403,17 +405,17 @@ Is this the best way to present this information?
 
 
 - What does race affecting recidivism mean?
-  - No: Someones race affects their behavior
-  - Yes: The effect of race living in a racially biased society
-
-
-- Question: how could this happen theoretically?
+  - Incorrect: Someones race affects their behavior
+  - Correct: The effect of race living in a racially biased society
 
 
 - How could we quantify bias in this case?  Are race and COMPAS still associated after taking recidivism into account?
 
 
-- It is tempting to use `decile_score ~ is_recid + race` to quantify the association between COMPAS and race while controlling for recidivism.
+- It is tempting to use `decile_score ~ is_recid + race`
+  - This regression could answer the following: Is race helpful for predicting COMPAS score while controlling for recidivism?
+  - If race were significant, that would indicate that race contributes to COMPAS beyond recidivism itself, so COMPAS would be racially biased
+  - But, this is not a valid model because `decile_score` is collected before `is_recid`
 
 ## Causation and Collider Bias
 
@@ -421,8 +423,8 @@ Is this the best way to present this information?
 
 ### Bayesian Network 1:
 
-<!--html_preserve--><div id="htmlwidget-fe072bb5a078214b48b1" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-fe072bb5a078214b48b1">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-1fc230af54d94aa1e6d9" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1fc230af54d94aa1e6d9">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model: Think of a dataset where $A,B,C$ are collected
 
@@ -513,8 +515,8 @@ Question: Does this coefficient and intercept estimate make sense?
 - b) nope
 
 ### Bayesian Network 2:
-<!--html_preserve--><div id="htmlwidget-129461b97fb330bdc720" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-129461b97fb330bdc720">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-3d3a23903483a1b106ac" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-3d3a23903483a1b106ac">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -567,8 +569,8 @@ Question: What about this regression model: `C ~ A`?
 - b) $A$ should not be statistically significant
 
 ### Bayesian Network 3:
-<!--html_preserve--><div id="htmlwidget-8caf55907aef34eec4f5" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-8caf55907aef34eec4f5">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-3db204feb087c62f633a" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-3db204feb087c62f633a">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -617,8 +619,8 @@ summary(lm(C~A+B))
 
 ### Bayesian Network 3 (again) with `A` as the outcome:
 
-<!--html_preserve--><div id="htmlwidget-97fa56c8010549c4a4a6" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-97fa56c8010549c4a4a6">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-46272828a120e8760a5e" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-46272828a120e8760a5e">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Question: What would a regression model of `A ~ B + C` yield?
 
@@ -686,13 +688,28 @@ summary(lm(A~B))
 ```
 
 - Even though `A` and `B` are independent, they are *conditionally dependent* if controlling for `C`.
-- Why did this happen?  Does it make sense?
-- Consider $A\sim \text{Bernoulli}(0.5), B\sim \text{Bernoulli}(0.5)$ (independent coin flips), and $C = A\cdot B$.  
+
+
+- Why did this happen?  Let's take a simple example
+
+
+- Assume $A\sim \text{Bernoulli}(0.4)$, and $B\sim \text{Bernoulli}(0.7)$
+
+
+- Question: What is $P(B=1|A=1)$?
+
+
+- Define $C = \begin{cases} 1 \text{ when } A=B \\ 0 \text{ when } A\neq B\end{cases}$
+
+
+- Question: What is $P(B=1| A=1, C=0)$?
+
+
 - $A$ and $B$ are independent; that is, knowledge of $B$ give no information on the value of $A$. But, additional knowledge of $C$ does give information about the value of $A$.
 
 **Bayesian Network 4**
-<!--html_preserve--><div id="htmlwidget-812bfaca5c89febff14d" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-812bfaca5c89febff14d">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-09ccb24f608d4e1ee344" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-09ccb24f608d4e1ee344">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -882,7 +899,7 @@ $$S(t)=P(T>t)=1-F(t)$$
 
 - Hazard function:
 \[
-\lambda(t) =\lim_{h\rightarrow 0} P(T\leq t+h | T>t) =\lim_{h\rightarrow 0} \frac{P(t<T\leq t+h)}{P(T>t)}= \frac{f(t)}{S(t)} = -\frac{d\log S(t)}{dt}.
+\lambda(t) =\lim_{h\rightarrow 0} \frac{P(T\leq t+h | T>t)}{h} = \lim_{h\rightarrow 0} \frac{P(t<T\leq t+h)}{h P(T>t)}= \frac{f(t)}{S(t)} = -\frac{d\log S(t)}{dt}.
 \]
 - Hazard function gives the instantaneous probability of an event at time $t$ given survival until time $t$
 - Notice that $f(t)=\lambda(t)S(t)$
@@ -1002,7 +1019,7 @@ S\left(t_{(j)}\right)
 
 - This seems [tautological](https://www.merriam-webster.com/dictionary/tautology), but it's helpful here because it allows us to include the censored observations in the denominator appropriately as $t$ increases
 
-- For $j = 1,\dots, J$, the "instantaneous" probability of an event occurring at time $t_j$:
+- For $j = 1,\dots, J$, the "instantaneous" probability of an event occurring at time $t_{(j)}$:
 $$\pi_j = P\left(T \leq t_{(j)} | T > t_{(j-1)}\right) = 1-P\left(T > t_{(j)} | T > t_{(j-1)}\right)$$
 - Then 
 \[
@@ -1105,23 +1122,69 @@ ph$t_atrisk <- ph$end - ph$start
 survobj <- with(ph, Surv(t_atrisk, event))
 fit0 <- survfit(survobj~1, data=ph)
 # summary(fit0)
-plot(fit0, xlab="Time at risk of recidivism in Days", 
-   ylab="% not rearrested", yscale=100,
-   main ="Survival Distribution (Overall)") 
+plot(fit0, xlab="Time at Risk (Days)", 
+   ylab="Percent Not Rearrested",
+   main ="Survival Function (Overall)") 
 ```
 
 ![](survival_files/figure-html/km_curve-1.png)<!-- -->
 
 ```r
-fitr <- survfit(survobj~race, data=ph)
-plot(fitr, xlab="Time at risk of recidivism in Days", 
-   ylab="% not rearrested", yscale=100,
-   main="Survival Distribution by race",
-   col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple')) 
-legend('bottomleft', legend=levels(as.factor(ph$race)), col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple'), lty=1)
+ph$compas <- cut(ph$decile_score, breaks=c(0,3,6,10))
+fitc <- survfit(survobj~compas, data=ph)
+plot(fitc, xlab="Time at Risk (Days)", 
+   ylab="Percent Not Rearrested", yscale=100, ylim=c(1, 0.4),
+   main="Survival Function by COMPAS",
+   col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple'))
+legend_text = c('1 to 3', '4 to 6', '7 to 10')
+legend('bottomleft', legend=legend_text, title='COMPAS Score', bty='n',
+       col=c('red', 'blue', 'orange'), lty=1)
 ```
 
 ![](survival_files/figure-html/km_curve-2.png)<!-- -->
+
+```r
+ph$t_atrisk <- ph$end - ph$start
+
+survobj_yr <- with(ph, Surv(t_atrisk/365.25, event))
+fitr <- survfit(survobj_yr~race, data=ph)
+# `fun` parameter only works here because plot is actually calling plot.survfit
+plot(fitr, xlab="Time at Risk (Years)", 
+   ylab="Recidivism (%)", yscale=100, ylim=c(0, 0.45), fun = function(x) {1 - x},
+   main="Recidivism by Race over Time",
+   col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple'))
+recid_order = c(1,3,5,4,6,2)
+legend('topleft', legend=levels(as.factor(ph$race))[recid_order], bty='n',
+       col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple')[recid_order], lty=1)
+text(2.5, 0.05, 'Log-Rank Test\n p<0.001')
+```
+
+![](survival_files/figure-html/km_curve-3.png)<!-- -->
+
+- Remember: For publication, make plots as easy as possible to understand
+
+
+- In this case, the plot is easier to understand looking at recidivism rather than not recidivism
+
+
+- Here $S(t)$ give the probability that rearrest will occur after time $t$; that is, someone will not be arrested before time $t$
+
+
+- $F(t) = 1-S(t)$ is the cumulative probability of arrest before time $t$
+
+
+- Each curve gives the proportion of recidivism in a racial group at time $t$
+
+
+- Years seems easier to understand than day for this
+
+
+- We can use the [log-rank test](https://en.wikipedia.org/wiki/Logrank_test) to see if at least one curve is different from others
+
+
+- $H_0:$ There is no different between the curves; $H_1:$ at least one curve is different from others
+
+
 
 ```r
 survdiff(survobj~race, data=ph)
@@ -1142,19 +1205,17 @@ survdiff(survobj~race, data=ph)
 ##  Chisq= 147  on 5 degrees of freedom, p= <2e-16
 ```
 
-```r
-ph$compas <- cut(ph$decile_score, breaks=c(0,3,6,10))
-fitc <- survfit(survobj~compas, data=ph)
-plot(fitc, xlab="Time at risk of recidivism in Days", 
-   ylab="% not rearrested", yscale=100,
-   main="Survival Distribution by COMPAS",
-   col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple')) 
-legend('bottomleft', legend=levels(as.factor(ph$compas)), col = c('red', 'blue', 'orange', 'yellow', 'green', 'purple'), lty=1)
-```
 
-![](survival_files/figure-html/km_curve-3.png)<!-- -->
+- Statistical interpretation: This significant $p$-value indicates that at least one survival curve is different from the other
 
-Note: I haven't used this package in a long time so I needed to look how to use the functions in [documentation](https://cran.r-project.org/web/packages/survival/survival.pdf).  As a consultant, you will probably need to read the documentation a lot.
+
+- Research area interpretation: Recidivism rates differ by race
+
+
+- Don't forget: [documentation](https://cran.r-project.org/web/packages/survival/survival.pdf) is your best friend
+
+
+- As a consultant, you will probably need to read the documentation a lot.
 
 ## Cox proportional hazards model
 
@@ -1187,9 +1248,9 @@ $$\lambda(t_{(j)}|x_{(j)})=\lambda_0(t_{(j)})\exp(x_{(j)}\beta)$$
 - The total probability within the sample of an event occurring at time $t_{(j)}$ given those who have survived until $t_{(j)}$ is 
 $$\sum_{k: t_k\geq t_{(j)}} \lambda(t_{(j)}|x_k) = \sum_{k: t_k\geq t_{(j)}} \lambda_0(t_{(j)})\exp(x_k\beta)$$
 
-- Then probability of an event occurring at $t_{(j)}$ conditioning on covariates $x_{(j)}$ (the likelihood) is
+- Then probability of an event occurring at $t_{(j)}$ conditioning on covariates $x_{(j)}$ (partial likelihood) is
 $$\begin{align*}
-L_j(\beta) &= P[(j)\text{ fails}|\text{1 failure from those at risk at $t_{(j)}$}]
+\tilde L_j(\beta) &= P[(j)\text{ fails}|\text{1 failure from those at risk at $t_{(j)}$}]
 = \frac{P[\text{$(j)$ fails}| \text{still at risk}]}{\sum_{k: t_k\geq t_{(j)}}P(\text{$k$ fails}| \text{still at risk})} \\
 &= \frac{\lambda(t_{(j)}|x_{(j)})}{\sum_{k: t_k\geq t_{(j)}} \lambda(t_{(j)}|x_k)} = \frac{\lambda_0(t_{(j)})\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \lambda_0(t_{(j)})\exp(x_k\beta)}
 = \frac{\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \exp(x_k\beta)}
@@ -1202,7 +1263,7 @@ L_j(\beta) &= P[(j)\text{ fails}|\text{1 failure from those at risk at $t_{(j)}$
 $$\tilde L(\beta) = \prod_{j=1}^J L_j(\beta) = \prod_{j=1}^J \frac{\exp(x_{(j)}\beta)}{\sum_{k: t_k\geq t_{(j)}} \exp(x_k\beta)}
 = \prod_{i=1}^n \left[\frac{\exp(x_i\beta)}{\sum_{\ell\in R(t_i)} \exp(x_\ell\beta)}\right]^{\delta_i}$$
 
-- log-likelihood:
+- log- partial likelihood:
 $$
 \tilde \ell(\beta) = \sum_{j=1}^J\left[ x_{(j)}\beta - \log \left(\sum_{k: t_k\geq t_{(j)}} \exp(x_k\beta) \right)\right]
 $$
@@ -1227,7 +1288,7 @@ where $R(t) = \left\{\ell: t_\ell \geq t\right\}$
 | B | 0.1 | 0.35 |
 | A*B | 0.5 | 0.02 |
 
-- On average, $Y$ increases by 1.5 when $A=1$ compared to $A=0$ while controlling for $B$ and this change is statistically significant at an $\alpha=0.05$ signifiance level
+- On average, $Y$ increases by 1.5 when $A=1$ compared to $A=0$ while controlling for $B$ and this change is statistically significant at an $\alpha=0.05$ significance level
 - There is no evidence to suggest that $B$ is associated with $Y$ (while controlling for $A$)
 - Additionally, $Y$ increases by 0.5 when both $A$ and $B$ are 1
 
@@ -1242,76 +1303,127 @@ where $R(t) = \left\{\ell: t_\ell \geq t\right\}$
 ```r
 ph$race = relevel(as.factor(ph$race), ref="Caucasian")
 ph$age10 = ph$age/10
-summary(coxph(survobj~race*decile_score+age10, data=ph))
+summary(coxph(survobj~decile_score*race+sex+age10, data=ph))
 ```
 
 ```
 ## Call:
-## coxph(formula = survobj ~ race * decile_score + age10, data = ph)
+## coxph(formula = survobj ~ decile_score * race + sex + age10, 
+##     data = ph)
 ## 
 ##   n= 10314, number of events= 2759 
 ## 
 ##                                       coef exp(coef) se(coef)      z Pr(>|z|)
-## raceAfrican-American               0.25736   1.29351  0.09147  2.814   0.0049
-## raceAsian                         -1.81253   0.16324  0.83302 -2.176   0.0296
-## raceHispanic                       0.07436   1.07719  0.14092  0.528   0.5977
-## raceNative American               -2.44849   0.08642  1.52191 -1.609   0.1077
-## raceOther                         -0.21598   0.80575  0.17696 -1.220   0.2223
-## decile_score                       0.18448   1.20260  0.01306 14.129  < 2e-16
-## age10                             -0.09567   0.90877  0.01875 -5.102 3.36e-07
-## raceAfrican-American:decile_score -0.02812   0.97227  0.01560 -1.802   0.0715
-## raceAsian:decile_score             0.31320   1.36779  0.12583  2.489   0.0128
-## raceHispanic:decile_score         -0.03159   0.96890  0.02780 -1.137   0.2557
-## raceNative American:decile_score   0.28200   1.32578  0.17978  1.569   0.1167
-## raceOther:decile_score             0.04658   1.04768  0.03587  1.299   0.1941
+## decile_score                       0.18520   1.20346  0.01302 14.226  < 2e-16
+## raceAfrican-American               0.27475   1.31620  0.09127  3.010  0.00261
+## raceAsian                         -1.84443   0.15812  0.82830 -2.227  0.02596
+## raceHispanic                       0.07333   1.07608  0.14037  0.522  0.60142
+## raceNative American               -2.60760   0.07371  1.55362 -1.678  0.09327
+## raceOther                         -0.22491   0.79859  0.17648 -1.274  0.20252
+## sexMale                            0.39744   1.48801  0.05268  7.545 4.54e-14
+## age10                             -0.10304   0.90209  0.01875 -5.497 3.87e-08
+## decile_score:raceAfrican-American -0.03467   0.96592  0.01558 -2.226  0.02604
+## decile_score:raceAsian             0.30788   1.36054  0.12496  2.464  0.01375
+## decile_score:raceHispanic         -0.03940   0.96137  0.02765 -1.425  0.15418
+## decile_score:raceNative American   0.30262   1.35341  0.18380  1.646  0.09967
+## decile_score:raceOther             0.04402   1.04500  0.03573  1.232  0.21798
 ##                                      
+## decile_score                      ***
 ## raceAfrican-American              ** 
 ## raceAsian                         *  
 ## raceHispanic                         
-## raceNative American                  
+## raceNative American               .  
 ## raceOther                            
-## decile_score                      ***
+## sexMale                           ***
 ## age10                             ***
-## raceAfrican-American:decile_score .  
-## raceAsian:decile_score            *  
-## raceHispanic:decile_score            
-## raceNative American:decile_score     
-## raceOther:decile_score               
+## decile_score:raceAfrican-American *  
+## decile_score:raceAsian            *  
+## decile_score:raceHispanic            
+## decile_score:raceNative American  .  
+## decile_score:raceOther               
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ##                                   exp(coef) exp(-coef) lower .95 upper .95
-## raceAfrican-American                1.29351     0.7731  1.081223    1.5475
-## raceAsian                           0.16324     6.1259  0.031898    0.8354
-## raceHispanic                        1.07719     0.9283  0.817225    1.4199
-## raceNative American                 0.08642    11.5708  0.004377    1.7064
-## raceOther                           0.80575     1.2411  0.569597    1.1398
-## decile_score                        1.20260     0.8315  1.172211    1.2338
-## age10                               0.90877     1.1004  0.875973    0.9428
-## raceAfrican-American:decile_score   0.97227     1.0285  0.942989    1.0025
-## raceAsian:decile_score              1.36779     0.7311  1.068836    1.7504
-## raceHispanic:decile_score           0.96890     1.0321  0.917530    1.0232
-## raceNative American:decile_score    1.32578     0.7543  0.932054    1.8858
-## raceOther:decile_score              1.04768     0.9545  0.976552    1.1240
+## decile_score                        1.20346     0.8309  1.173140    1.2346
+## raceAfrican-American                1.31620     0.7598  1.100602    1.5740
+## raceAsian                           0.15812     6.3245  0.031183    0.8017
+## raceHispanic                        1.07608     0.9293  0.817258    1.4169
+## raceNative American                 0.07371    13.5665  0.003508    1.5487
+## raceOther                           0.79859     1.2522  0.565069    1.1286
+## sexMale                             1.48801     0.6720  1.342037    1.6499
+## age10                               0.90209     1.1085  0.869549    0.9358
+## decile_score:raceAfrican-American   0.96592     1.0353  0.936875    0.9959
+## decile_score:raceAsian              1.36054     0.7350  1.064977    1.7381
+## decile_score:raceHispanic           0.96137     1.0402  0.910651    1.0149
+## decile_score:raceNative American    1.35341     0.7389  0.944004    1.9404
+## decile_score:raceOther              1.04500     0.9569  0.974321    1.1208
 ## 
-## Concordance= 0.661  (se = 0.005 )
-## Likelihood ratio test= 866.1  on 12 df,   p=<2e-16
-## Wald test            = 841.2  on 12 df,   p=<2e-16
-## Score (logrank) test = 906.8  on 12 df,   p=<2e-16
+## Concordance= 0.667  (se = 0.005 )
+## Likelihood ratio test= 928.2  on 13 df,   p=<2e-16
+## Wald test            = 898.1  on 13 df,   p=<2e-16
+## Score (logrank) test = 965  on 13 df,   p=<2e-16
 ```
+
+| Factor | Hazard Rate Ratio (95% CI) | p-value |
+| :---  | :----:   |  ---: |
+| COMPAS |||
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Decile Score (per point) | 1.20 (1.17, 1.23) | <0.001 |
+| Race (compared to White) | | |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    Black | 1.32 (1.10, 1.57) | 0.003 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    Asian | 0.16 (0.03, 0.80) | 0.026 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    Hispanic | 1.08 (0.82, 1.42) | 0.601 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    Native American | 0.07 (0.00, 1.55) | 0.093 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    Other | 0.80 (0.57, 1.13) | 0.203 |
+| Sex (compared to Female) |||
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    Male | 1.49, (1.34, 1.65) | <0.001 |
+| Age |||
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (per 10 years) | 0.90 (0.87, 0.94) | <0.001 |
+| COMPAS Decile Score by Race (compared to White) |||
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    Black (per one point) | 0.97 (0.94, 0.99) | 0.026 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    Asian (per one point) | 1.36 (1.06, 1.74) | 0.014 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    Hispanic (per one point) | 0.96 (0.91, 1.01) | 0.154 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    Native American (per one point) | 1.35 (0.94, 1.94) | 0.100 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    Other (per one point) | 1.05 (0.97, 1.12) | 0.218 |
 
 - Question: Does this model indicate that COMPAS is racially biased?
   - A: Yes
   - B: No
   - C: Not Sure
 
-- An interpretation: 
-  Compared to Caucasians, a unit increase in the COMPAS decile score for African-Americans corresponds to a decrease in risk of recidivism by a factor of 0.97; this figure is borderline significant (p=0.0715). Said differently, among African-Americans and Caucasians with similar COMPAS scores, African-Americans, on average, have a 3% lower risk of recidivism compared to Caucasians. This indicates that COMPAS may be assigning higher scores to African-American than to Caucasians with a similar risk of recidivism. Asians, on the other hand, were assigned lower scores than Caucasians with a similar risk of recidivism (p=0.0128). There were no differences between other racial groups and Caucasians.
 
-- How can we interpret this model?
+- Interpretations:
+
+
+- For each unit increase in COMPAS decile score, risk of recidivism increases, on average, by a factor 1.2 (p<0.001).
+
+
+- Risk of recidivism is greater for Blacks (1.32, p=0.003) and smaller for Asians (0.16, p=0.026) compared to Whites; all other racial groups had similar risk to Whites.
+
+
+- Risk is greater for men with 1.5 (p<0.001) times the risk of women.
+
+
+
+- Risk decreases with age; for every 10 year increase, risk drops by a factor of 0.9 (10%) on average.
+
+
+
+- Compared to Whites, a unit increase in the COMPAS decile score for African-Americans corresponds to a decrease in risk of recidivism by a factor of 0.97 (p=0.026). 
+
+
+- Said differently, among African-Americans and Caucasians with similar COMPAS scores, African-Americans, on average, have a 3% lower risk of recidivism compared to Caucasians. This indicates that COMPAS may be assigning higher scores to African-American than to Caucasians with a similar risk of recidivism. 
+
+
+- Asians, on the other hand, were assigned lower scores than Caucasians with a similar risk of recidivism (p=0.0128). There were no differences between other racial groups and Caucasians.
+
 
 - Testing proportional hazards assumption
+
+
 - Null Hypothesis: Proportional hazards
+
+
 - Should consider transformation (next lecture)
 
 
@@ -1335,9 +1447,15 @@ test.ph
 - In cases, covariates can change over time
   - Here, zip code, or age can change over time
   - This change may have an effect on the hazard function
+
+
 - Recall that $\lambda(t)$ is the instantaneous probability of an event at time $t$ given survival up to $t$
+
+
 - If one or more covariates change over time, $x(t)$, we can model hazard as
 $$\lambda(t|x(t)) = \lambda_0(t)\exp(\beta x(t))$$
+
+
 - The partial likelihood become
 $$\tilde L(\beta) = \prod_{i=1}^n \left[\frac{\exp(x_i(t_i)\beta)}{\sum_{\ell\in R(t_i)} \exp(x_\ell(t_i)\beta)}\right]^{\delta_i}$$
 
@@ -1345,9 +1463,14 @@ $$\tilde L(\beta) = \prod_{i=1}^n \left[\frac{\exp(x_i(t_i)\beta)}{\sum_{\ell\in
 
 - If a sample of $n$ observations are thought to have $S$ mutually exclusive baseline hazards, we can choose to use a stratified model
 $$\lambda_h(t|x) = \lambda_{0h}(t)\exp(x\beta) \text{ for } h=1,\dots,S$$
+
+
 - Example: Want to assess effect of age and weight only on risk of death, we may want to stratify by gender
+
+
 - If covariates are assumed to be different in different strata, we can estimate strata-specific parameters, $\beta_h$, for each strata
 $$\lambda_h(t|x) = \lambda_{0h}(t)\exp(x\beta_h) \text{ for } h=1,\dots,S$$
+
 - Partial likelihood:
 $$\tilde L(\beta) = \prod_{h=1}^S \prod_{i=1}^{n_h} \left[\frac{\exp(x_{i(h)}\beta_h)}{\sum_{\ell\in R_h(t_{i(h)})} \exp(x_{\ell(h)\beta_h}))}\right]$$
 where $n_h$ is the number in each strata, $i(h)$ is the $i$th observation in the $h$th stratam, $R_h$ is the stratam specific risk set
@@ -1355,12 +1478,26 @@ where $n_h$ is the number in each strata, $i(h)$ is the $i$th observation in the
 **Frailty model**
 
 - Some data will have associations among the observations themselves
+
+
 - Example: COMPAS data could have multiple arrests, their associated COMPAS score, and their own follow up
+
+
 - It is reasonable to assume that past scores, and arrests may provide information (association) on future data
+
+
 - If there are associations among the observations in the data, the parameter point estimates will be accurate
+
+
 - But, standard error will not be correct, so any inference (p-values, confidence intervals) will not be valid
+
+
 - Solution: modify the information sandwich for GLMs with associated observations to Cox PH
+
+
 - This provides a consistent estimator for the covariance matrix
+
+
 - Note: so far we have not discussed sandwich estimator
 
 These notes are based on chapter 9 of Lachin, John M. Biostatistical methods: the assessment of relative risks. Vol. 509. John Wiley & Sons, 2009.
@@ -1368,11 +1505,22 @@ These notes are based on chapter 9 of Lachin, John M. Biostatistical methods: th
 ### Consulting Case Study: Treating Syphilis in People living with HIV
 
 - The typically, the first line treatment for syphilis is penicillin
+
+
 - But, people living with HIV are sometimes thought to be immunocompromised
+
+
 - Because of this, it was common for physicians to administer two or more standard doses to treat syphilis for someone living with HIV
+
+
 - US treatment guidelines in the US recommended one standard dose regardless of HIV status
+
+
 - But, there was disagreement in the medical community on this guideline
+
+
 - This type of disagreement (equipoise) frequently leads to research
+
 
 **Background:** Treatment guidelines recommend the use of a single dose of benzathine penicillin G (BPG) for treating early syphilis in human immunodeficiency virus (HIV)-infected persons. However, data supporting this rec- ommendation are limited. We examined the efficacy of single-dose BPG in the US Military HIV Natural History Study.
 
@@ -1387,10 +1535,19 @@ These notes are based on chapter 9 of Lachin, John M. Biostatistical methods: th
 Look for in paper:
 
 - Data inclusion criteria
+
+
 - Baseline table for individuals
+
+
 - Syphilis episodes table
+
+
 - KM curves
+
+
 - Cox PH Model
+
 
 [Response Letter](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.864.7969&rep=rep1&type=pdf)
 
