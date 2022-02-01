@@ -423,8 +423,8 @@ Is this the best way to present this information?
 
 ### Bayesian Network 1:
 
-<!--html_preserve--><div id="htmlwidget-1fc230af54d94aa1e6d9" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-1fc230af54d94aa1e6d9">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-f477a8a7490983d4abd3" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-f477a8a7490983d4abd3">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model: Think of a dataset where $A,B,C$ are collected
 
@@ -515,8 +515,8 @@ Question: Does this coefficient and intercept estimate make sense?
 - b) nope
 
 ### Bayesian Network 2:
-<!--html_preserve--><div id="htmlwidget-3d3a23903483a1b106ac" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-3d3a23903483a1b106ac">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-b841f886d20e65c6efea" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-b841f886d20e65c6efea">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -569,8 +569,8 @@ Question: What about this regression model: `C ~ A`?
 - b) $A$ should not be statistically significant
 
 ### Bayesian Network 3:
-<!--html_preserve--><div id="htmlwidget-3db204feb087c62f633a" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-3db204feb087c62f633a">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-3f89cf7f3eea44a1e314" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-3f89cf7f3eea44a1e314">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -619,8 +619,8 @@ summary(lm(C~A+B))
 
 ### Bayesian Network 3 (again) with `A` as the outcome:
 
-<!--html_preserve--><div id="htmlwidget-46272828a120e8760a5e" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-46272828a120e8760a5e">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-401ffda767b58c821e2d" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-401ffda767b58c821e2d">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Question: What would a regression model of `A ~ B + C` yield?
 
@@ -708,8 +708,8 @@ summary(lm(A~B))
 - $A$ and $B$ are independent; that is, knowledge of $B$ give no information on the value of $A$. But, additional knowledge of $C$ does give information about the value of $A$.
 
 **Bayesian Network 4**
-<!--html_preserve--><div id="htmlwidget-09ccb24f608d4e1ee344" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-09ccb24f608d4e1ee344">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-c25242b1e21bc370ceac" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-c25242b1e21bc370ceac">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -1005,7 +1005,14 @@ $$t_{(1)}, t_{(2)}, \dots, t_{(J)}$$
 - There are only $J$ sample points in time where events occur
 
 
-- Recall conditional probability rule $P(A|B)=\frac{P(A,B)}{P(B)}$
+- Question: For any events $A$ and $B$, we can factor their joint probability as $P(A,B) = P(A|B) P(B)$?
+  - a. True
+  - b. False
+
+
+- Question: If $A\subseteq B$, then $P(A) = P(A,B)$?
+  - a. True
+  - b. False
 
 
 - Because $t_{(j)} > t_{(j-1)}$,
@@ -1049,39 +1056,7 @@ This [video](https://www.youtube.com/watch?v=NDgn72ynHcM) clearly illustrates ho
 library(survival)
 
 dat <- read.csv(url('https://raw.githubusercontent.com/propublica/compas-analysis/master/cox-parsed.csv'))
-names(dat)
-```
 
-```
-##  [1] "id"                      "name"                   
-##  [3] "first"                   "last"                   
-##  [5] "compas_screening_date"   "sex"                    
-##  [7] "dob"                     "age"                    
-##  [9] "age_cat"                 "race"                   
-## [11] "juv_fel_count"           "decile_score"           
-## [13] "juv_misd_count"          "juv_other_count"        
-## [15] "priors_count"            "days_b_screening_arrest"
-## [17] "c_jail_in"               "c_jail_out"             
-## [19] "c_case_number"           "c_offense_date"         
-## [21] "c_arrest_date"           "c_days_from_compas"     
-## [23] "c_charge_degree"         "c_charge_desc"          
-## [25] "is_recid"                "r_case_number"          
-## [27] "r_charge_degree"         "r_days_from_arrest"     
-## [29] "r_offense_date"          "r_charge_desc"          
-## [31] "r_jail_in"               "r_jail_out"             
-## [33] "violent_recid"           "is_violent_recid"       
-## [35] "vr_case_number"          "vr_charge_degree"       
-## [37] "vr_offense_date"         "vr_charge_desc"         
-## [39] "type_of_assessment"      "decile_score.1"         
-## [41] "score_text"              "screening_date"         
-## [43] "v_type_of_assessment"    "v_decile_score"         
-## [45] "v_score_text"            "v_screening_date"       
-## [47] "in_custody"              "out_custody"            
-## [49] "priors_count.1"          "start"                  
-## [51] "end"                     "event"
-```
-
-```r
 dim(dat)
 ```
 
@@ -1164,7 +1139,9 @@ text(2.5, 0.05, 'Log-Rank Test\n p<0.001')
 - Remember: For publication, make plots as easy as possible to understand
 
 
-- In this case, the plot is easier to understand looking at recidivism rather than not recidivism
+- Question (opinion): Which plot type is easier to understand, Recidivism or Not Rearrested?
+  - a. Recidivism
+  - b. Not Rearrested
 
 
 - Here $S(t)$ give the probability that rearrest will occur after time $t$; that is, someone will not be arrested before time $t$
@@ -1177,6 +1154,13 @@ text(2.5, 0.05, 'Log-Rank Test\n p<0.001')
 
 
 - Years seems easier to understand than day for this
+
+
+- Question (Opinion): Which caption below is the best?
+  - a. Cumulative Probabilities of Recidivism by Race
+  - b. The plot above provides the cumulative probability of recidivism by race as time elapses
+  - c. The plot above shows the transformed survival functions, $P_a(t) = 1-S_a(t)$, for recidivism by race
+  - d. [no caption]
 
 
 - We can use the [log-rank test](https://en.wikipedia.org/wiki/Logrank_test) to see if at least one curve is different from others
@@ -1269,18 +1253,27 @@ $$
 $$
 where $R(t) = \left\{\ell: t_\ell \geq t\right\}$
 
+
 - Maximize the likelihood with Newton-Raphson method
+
+
+- Question: Can we use $\hat \beta$ to predict survival times?
+  - a. Yes
+  - b. No
 
 ### Is COMPAS racially biased?
 
-- To determine this, we must use interactions
+- To determine this, we must use interactions.  Why?
+
+
+- Without a race/COMPAS interaction
+  - race parameter estimates would indicate average risk of recidivism compared to baseline group
+  - decile score parameter would indicate average increase in risk for a unit increase in score
 
 
 - Let $A$ and $B$ be binary, input variables and $Y$ a continuous outcome
   - assume linear regression
 
-
-- How do we read the output?
 
 | Variable | Coef | p-value |
 | --- | --- | ---  |
@@ -1288,9 +1281,24 @@ where $R(t) = \left\{\ell: t_\ell \geq t\right\}$
 | B | 0.1 | 0.35 |
 | A*B | 0.5 | 0.02 |
 
-- On average, $Y$ increases by 1.5 when $A=1$ compared to $A=0$ while controlling for $B$ and this change is statistically significant at an $\alpha=0.05$ significance level
-- There is no evidence to suggest that $B$ is associated with $Y$ (while controlling for $A$)
-- Additionally, $Y$ increases by 0.5 when both $A$ and $B$ are 1
+
+- For the questions below, a = True, b=False
+
+
+- Question (T/F): On average, $Y$ increases by 1.5 when $A=1$ compared to $A=0$ while controlling for $B$ and this change is statistically significant at an $\alpha=0.05$ significance level.
+
+
+- Question(T/F): There is no evidence to suggest that $B$ is associated with $Y$ while controlling for $A$
+
+
+- Question(T/F): $Y$ increases by 0.5 when both $A$ and $B$ are both 1 compared to otherwise
+
+
+- Question(T/F): When $B=0$, $Y$ increases by 1.5, on average, when $A=1$ compared to $A=0$
+
+
+- It is a little easier to think of the model in terms of an equation
+
 
 - Changing the baseline race
   - R uses alphabetical order so African-American (AA) would be the reference group without the `relevel` command
@@ -1444,8 +1452,8 @@ test.ph
 
 **Time-Dependent Covariates**
 
-- In cases, covariates can change over time
-  - Here, zip code, or age can change over time
+- Because we are following observations over time, some covariates might change over time
+  - For example, zip code, smoking status, etc
   - This change may have an effect on the hazard function
 
 
@@ -1499,6 +1507,7 @@ where $n_h$ is the number in each strata, $i(h)$ is the $i$th observation in the
 
 
 - Note: so far we have not discussed sandwich estimator
+
 
 These notes are based on chapter 9 of Lachin, John M. Biostatistical methods: the assessment of relative risks. Vol. 509. John Wiley & Sons, 2009.
 
@@ -1558,6 +1567,17 @@ Look for in paper:
 
 ## High Level Summary
 
-- Always explore the data before running regressions and other statistical tests.  Look at the raw data itself, try to understand variable names, variable distributions, missing data, etc
+- Always think about time that variables are collected and possible causal ordering
+
+
+- Try to be aware of how underlying causal structure may affect parameters
+
+
+- The causal network above work for any regression model but in general, may not work as well as the simulations because all association were linear in the network simulations
+
+
+- For many inference problems, keeping non-significant variables in model gives additional information to reader
+
+
 - Survival analysis tools, such as Kaplan-Meier curves and Cox PH regression, are helpful when follow times leading up to an event vary by observation, especially when censoring occurs.
-- It is important to be aware of possible causal pathways. But, most of the time, it is not possible to use statistical models alone to attribute a causal relationships.
+
