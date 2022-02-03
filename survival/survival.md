@@ -423,8 +423,8 @@ Is this the best way to present this information?
 
 ### Bayesian Network 1:
 
-<!--html_preserve--><div id="htmlwidget-f477a8a7490983d4abd3" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-f477a8a7490983d4abd3">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-22a77a35ee02cad4df22" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-22a77a35ee02cad4df22">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model: Think of a dataset where $A,B,C$ are collected
 
@@ -515,8 +515,8 @@ Question: Does this coefficient and intercept estimate make sense?
 - b) nope
 
 ### Bayesian Network 2:
-<!--html_preserve--><div id="htmlwidget-b841f886d20e65c6efea" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-b841f886d20e65c6efea">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-46528befb67007d4fd39" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-46528befb67007d4fd39">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -569,8 +569,8 @@ Question: What about this regression model: `C ~ A`?
 - b) $A$ should not be statistically significant
 
 ### Bayesian Network 3:
-<!--html_preserve--><div id="htmlwidget-3f89cf7f3eea44a1e314" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-3f89cf7f3eea44a1e314">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-219de2957ec7f0af477e" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-219de2957ec7f0af477e">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -619,8 +619,8 @@ summary(lm(C~A+B))
 
 ### Bayesian Network 3 (again) with `A` as the outcome:
 
-<!--html_preserve--><div id="htmlwidget-401ffda767b58c821e2d" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-401ffda767b58c821e2d">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-86d3f32aede2bbed2497" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-86d3f32aede2bbed2497">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Question: What would a regression model of `A ~ B + C` yield?
 
@@ -708,8 +708,8 @@ summary(lm(A~B))
 - $A$ and $B$ are independent; that is, knowledge of $B$ give no information on the value of $A$. But, additional knowledge of $C$ does give information about the value of $A$.
 
 **Bayesian Network 4**
-<!--html_preserve--><div id="htmlwidget-c25242b1e21bc370ceac" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-c25242b1e21bc370ceac">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+<!--html_preserve--><div id="htmlwidget-6ff22edcc93c29033c57" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-6ff22edcc93c29033c57">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
 Mental Model:
 
@@ -1373,7 +1373,7 @@ summary(coxph(survobj~decile_score*race+sex+age10, data=ph))
 ## Score (logrank) test = 965  on 13 df,   p=<2e-16
 ```
 
-| Factor | Hazard Rate Ratio (95% CI) | p-value |
+| Factor | Hazard Rate (95% CI) | p-value |
 | :---  | :----:   |  ---: |
 | COMPAS |||
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Decile Score (per point) | 1.20 (1.17, 1.23) | <0.001 |
@@ -1472,18 +1472,24 @@ $$\tilde L(\beta) = \prod_{i=1}^n \left[\frac{\exp(x_i(t_i)\beta)}{\sum_{\ell\in
 - If a sample of $n$ observations are thought to have $S$ mutually exclusive baseline hazards, we can choose to use a stratified model
 $$\lambda_h(t|x) = \lambda_{0h}(t)\exp(x\beta) \text{ for } h=1,\dots,S$$
 
+- This assumes that the strata have different baseline hazard functions but the proportional hazards by covariate are the same, regardless of strata
+
+
+- Partial likelihood:
+$$\tilde L(\beta) = \prod_{h=1}^S \prod_{i=1}^{n_h} \left[\frac{\exp(x_{i(h)}\beta)}{\sum_{\ell\in R_h(t_{i(h)})} \exp(x_{\ell(h)}\beta))}\right]$$
+where $n_h$ is the number in each strata, $i(h)$ is the $i$th observation in the $h$th stratam, $R_h$ is the stratam specific risk set
+
 
 - Example: Want to assess effect of age and weight only on risk of death, we may want to stratify by gender
+
+
+- Note: If we stratify baseline hazard function, we will no longer have a covariate estimate for the stratified variable(s)
 
 
 - If covariates are assumed to be different in different strata, we can estimate strata-specific parameters, $\beta_h$, for each strata
 $$\lambda_h(t|x) = \lambda_{0h}(t)\exp(x\beta_h) \text{ for } h=1,\dots,S$$
 
-- Partial likelihood:
-$$\tilde L(\beta) = \prod_{h=1}^S \prod_{i=1}^{n_h} \left[\frac{\exp(x_{i(h)}\beta_h)}{\sum_{\ell\in R_h(t_{i(h)})} \exp(x_{\ell(h)\beta_h}))}\right]$$
-where $n_h$ is the number in each strata, $i(h)$ is the $i$th observation in the $h$th stratam, $R_h$ is the stratam specific risk set
-
-**Frailty model**
+**Frailty and clustered models**
 
 - Some data will have associations among the observations themselves
 
@@ -1507,6 +1513,9 @@ where $n_h$ is the number in each strata, $i(h)$ is the $i$th observation in the
 
 
 - Note: so far we have not discussed sandwich estimator
+
+
+- Other Solution: use random effects
 
 
 These notes are based on chapter 9 of Lachin, John M. Biostatistical methods: the assessment of relative risks. Vol. 509. John Wiley & Sons, 2009.
@@ -1565,7 +1574,7 @@ Look for in paper:
 
 [Our Response](https://academic.oup.com/cid/article/60/9/1444/404706)
 
-## High Level Summary
+### High Level Summary
 
 - Always think about time that variables are collected and possible causal ordering
 
@@ -1581,3 +1590,46 @@ Look for in paper:
 
 - Survival analysis tools, such as Kaplan-Meier curves and Cox PH regression, are helpful when follow times leading up to an event vary by observation, especially when censoring occurs.
 
+
+### Questions
+- For time to event data with no censoring, we can use Poisson regression?
+  - a. True
+  - b. False
+
+$$\\[2in]$$
+
+- With censored data, factoring the time-to-event density as hazard x survival allows us to make use of censored follow-up times.
+  - a. True
+  - b. False
+
+$$\\[2in]$$
+
+- KM curves visualize the hazard function
+  - a. True
+  - b. False
+
+$$\\[2in]$$
+
+- Log-rank test can determine if two survival curves are different while controlling for other variables.
+  - a. True
+  - b. False
+
+$$\\[2in]$$
+
+- For Cox PH regression, we typically care more about the number of events in the data than than the number of rows.
+  - a. True
+  - b. False
+
+$$\\[2in]$$
+
+- Interaction help determine if two factors jointly *affect* the outcome differently than can be explained additively by each factor alone.
+  - a. True
+  - b. False
+
+$$\\[2in]$$
+
+- When working with clustered data, it is usually helpful to include a cluster-level baseline table and a row-level table.
+  - a. True
+  - b. False
+
+$$\\[2in]$$

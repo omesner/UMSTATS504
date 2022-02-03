@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```
 
-## Understanding Lymphoma
+## Understanding Gene Expression and Lymphoma
 
 ![Micrograph (Field stain) of a Diffuse Large B-Cell Lymphoma](https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Diffuse_large_B_cell_lymphoma_-_cytology_low_mag.jpg/300px-Diffuse_large_B_cell_lymphoma_-_cytology_low_mag.jpg)
 
@@ -46,6 +46,11 @@ From Wikipedia:
 - Each column corresponds to gene expression using a microarray, one column gives the type of lymphoma
 
 
+- **Goal**: Determine which genes are associated with with lymphoma type
+
+
+- Start by looking at the data
+
 ```{r data}
 load("./shipp.RData")
 ls() # .RData files can include any R data structure.  The "ls()" command shows what it contains.
@@ -57,8 +62,21 @@ table(shipp$y)
 ```
 
 - Note that there are far more columns than rows here
-  - So standard regression methods will not work
 
+
+- For this, I would visually inspect data data
+
+
+- It doesn't make sense to try to look at >7k plots
+
+
+- Question: Will standard regression methods will not work?
+  - A: Yes
+  - B: No, there would be more parameters in the model than rows of data
+  - C: No, $X^TX$ is a singular matrix
+  - D: Not Sure
+
+$$\\[1in]$$
 
 - Question: Should we use a t-test to determine which genes are associated with DLBCL?
   - A: Yes
@@ -70,7 +88,7 @@ pvals <-c()
 for(var in names(shipp$x)){
   pvals <- c(pvals, t.test(shipp$x[[var]] ~ shipp$y)$p.value)
 }
-hist(pvals)
+hist(pvals, xlab = 'p-values', main='Histogram of p-values')
 sum(pvals < 0.05)
 sum(pvals < 0.05)/length(pvals) # pct significant at alpha = 0.05
 ```
@@ -83,10 +101,18 @@ sum(pvals < 0.05)/length(pvals) # pct significant at alpha = 0.05
 
 **Multiple testing error**
 
-- What would we get if none were significant?
+- What would happen if we ran many t-tests for columns where none are associated with the outcome?
+
 
 - The data below are generated randomly and independent from the outcome
-  - That is, we randomly generate data without using the outcome, so we know, theoretically that each column of generated data is independent from the outcome
+
+
+
+- Randomly generate each column independent of the outcome
+
+
+- For each column, $V$ in the generated data set, we know that $V \perp Y$
+
 
 ```{r null}
 set.seed(1234)
@@ -96,17 +122,32 @@ null_pvals <-c()
 for(var in names(null_dat)){
   null_pvals <- c(null_pvals, t.test(null_dat[[var]] ~ shipp$y)$p.value)
 }
-hist(null_pvals)
+hist(null_pvals, xlab = 'p-values', main='Histogram of Null p-values')
+```
+
+
+- Question: What density does this look like?
+  - A: Exponential
+  - B: Beta
+  - C: Negative Binomial
+  - D: Uniform
+
+$$\\[1in]$$
+
+- Question: What proportion is less than 0.05?
+  - Enter response as decimal
+
+$$\\[2in]$$
+
+```{r false discovery}
 sum(null_pvals < 0.05)/length(null_pvals) # pct significant at alpha = 0.05
 ```
 
 
-- Question: Did you expect that 5% of p-values < 0.05?
-  - A: Yes
-  - B: No
-  - C: Not Sure
 
 - Intuitively, what is the problem here?  Why are so many p-values $<0.05$ when none are associated with the outcome?
+
+
 
 - Question: Did you expect the p-values to have a uniform distribution?
   - A: Yes
@@ -116,6 +157,7 @@ sum(null_pvals < 0.05)/length(null_pvals) # pct significant at alpha = 0.05
 
 - Why do they look uniform?
 
+
 **What is a hypothesis test/p-value?**
 
 - Example:
@@ -123,13 +165,13 @@ sum(null_pvals < 0.05)/length(null_pvals) # pct significant at alpha = 0.05
   - Let $X_1, X_2,\dots, X_n$ be an independent, identically distributed sample 
 
   - Let $E[X_i]=\mu$ (unknown) and $E[(X_i-\mu)^2]=\sigma^2=1$ (known) for each $i=1,2,\dots,n$
-  - Is $\mu< 0$?
+  - Is $\mu$ positive or negative?
   - Let $H_0: \mu\geq0$ and $H_1: \mu< 0$
   - Let $\bar X_n = \frac{1}{n}\sum_{i=1}^n X_i$
-  - Intuitively, if $\frac{\bar X_n -\mu}{\sigma/\sqrt n} = \sqrt n \bar X$ is too small, then we can reject $H_0$
+  - Intuitively, if $\frac{\bar X_n -\mu}{\sigma/\sqrt n} = \sqrt n \bar X$ is small (too negative), then we can reject $H_0$
   - From the [central limit theorem](https://en.wikipedia.org/wiki/Central_limit_theorem), we know that $\frac{\bar X_n -\mu}{\sigma/\sqrt n} \leadsto N(0,1)$ (converges in distribution) as $n\rightarrow\infty$
   - That is, our test statistic, $T=\sqrt n \bar X$ is approximately $N(0,1)$ under $H_0$ (we're setting $\mu=0$)
-  - p-value: $p\approx P[T<N(0,1)] = \Phi(T) = \int_{-\infty}^T \frac{1}{\sqrt{2\pi}} e^{-\frac{x^2}{2}}dx$
+  - p-value: $p= P[T<N(0,1)] = \Phi(T) = \int_{-\infty}^T \frac{1}{\sqrt{2\pi}} e^{-\frac{x^2}{2}}dx$
 
 ![p-value illustration](./pval.png)
 
@@ -143,17 +185,20 @@ sum(null_pvals < 0.05)/length(null_pvals) # pct significant at alpha = 0.05
 
 2. p-value: $p= F(T)$
 
-3. Claim: $Y$ is uniformly distributed on $[0,1]$ $\Leftrightarrow$ $P[Y < y] = G(y) = y$ on $[0,1]$
+3. Claim: A random variable, $Y\sim G$, is uniformly distributed on $[0,1]$ $\Leftrightarrow$ $P[Y < y] = G(y) = y$ on $[0,1]$
 
 4. Goal: show that $P[p < y] = y$ under the null hypothesis
 
-5. Using $F^{-1}$, the inverse function of $F$,
+5. Using $F^{-1}$, the inverse function of $F$
+
+6. Assume that $F$ is montonically increasing, so that $F^{-1}$ is also monontically increasing
 \[
 \begin{align*}
-P[F(T) < y]
-&= P[F^{-1}(F(T)) < F^{-1}(y)] \\
-&= P(T < F^{-1}(y)) \\
-&= F(F^{-1}(y)) \\
+P[p < y]
+&=P[F(T) < y] & p=F(T)\\
+&= P[F^{-1}(F(T)) < F^{-1}(y)] &\text{$F^{-1}$ monotonically increasing}\\
+&= P[T < F^{-1}(y)] & F^{-1}(F(y)) = y\\
+&= F(F^{-1}(y)) & F(t) = P(T<t)\\
 &= y
 \end{align*}
 \]
@@ -161,7 +206,7 @@ P[F(T) < y]
 6. So, under the null hypothesis, p-value $\sim$Unif(0,1) $\blacksquare$
 
 - Question: Did this proof make sense?
-  - 1 (not at all) to 10 (perfect sense)
+  - 1 (not at all) to 5 (perfect sense)
 
 ## Multiple Testing
 
@@ -203,19 +248,24 @@ Let $I := \{i: H_{0,i} = 1\}$ be the set of true null hypotheses.
 \[
 \begin{align}
 P[V>0]
-&= P\left[ \bigcup_{i\in I} \left\{ p_i \leq \frac{\alpha}{m} \right\} \right]\\
+&= P\left[ \bigcup_{i\in I} \left\{ p_i \leq \frac{\alpha}{m} \right\} \right] & V>0\Leftrightarrow \text{ at least one $p_i$ significant in nulls}\\
 &\leq \sum_{i\in I} P\left[p_i \leq \frac{\alpha}{m}\right] & \text{Union bound}\\
-&= \sum_{i\in I} \frac{\alpha}{m} &\text{because $p_i\sim$ Unif$(0,1)$ for $i\in I$}\\
-&= \frac{\alpha |I|}{m} \leq \alpha
+&= \sum_{i\in I} \frac{\alpha}{m} &\text{$p_i\sim$ Unif$(0,1)$ for $i\in I$}\\
+&= \frac{\alpha |I|}{m} & |I|=\text{# true null hypotheses} \\
+&\leq \alpha & \frac{|I|}{m}\leq 1
 \end{align}
 \]
 
 More info on [union bound](https://en.wikipedia.org/wiki/Boole%27s_inequality)
 
 - Think about playing cards: $P[\text{Ace OR club}] \leq P[\text{Ace}] + P[\text{club}]$
+
+
+
 - Because of union bound, even holds when p-values are statistically dependent
 
-Using Bonferroni, which gene's should I recommend are associated with lymphoma?
+
+- Using Bonferroni, which gene's should I recommend are associated with lymphoma?
 
 ```{r bonferroni}
 bcorrection <- 0.05/length(pvals)
@@ -231,26 +281,53 @@ which(null_pvals<=bcorrection)
 ```
 
 - Notice that test may be associated (knowing one p-value may give information about others)
+
+
 - Bonferroni still works here
+
+
 - How could we construct a global null hypothesis from Bonferroni?
   - If at least one $p_i \leq \frac{\alpha}{m}$, then we can reject global null
-- Bonferroni is conservative
-  - Types of error: false positives (type I error) and false negatives (type II error)
-  - Bonferroni is very good at limiting false positives but not limiting false negatives
-  - Power = 1-P(type II error), is the probability of rejecting the null hypothesis when the alternative hypothesis is true
-  - Bonferroni may not always be a powerful test
+
+
+
+Bonferroni is conservative
+
+- Types of error: false positives (type I error) and false negatives (type II error)
+
+
+- Bonferroni is very good at limiting false positives but not limiting false negatives
+
+
+- Power = 1-P(type II error), is the probability of rejecting the null hypothesis when the alternative hypothesis is true
+
+
+- Bonferroni may not always be a powerful test
 
 **Fisher Combination**
 
 - Uses global null framework
+
+
 - Assumes that each $p_i$ is independent (why might this not be reasonable in most settings?)
+
+
 - If $H_{0,i}$ is true for each $i$ (and each test is independent), then
 \[
 T = \sum_{i=1}^m -2 \log(p_i) \sim \chi^2(2m)
 \]
+
+
 - uses that fact that transforming independent, uniform random variables this way will have a $\chi^2$ distribution
+
+
 - This test does not indicate which $H_{0,i}$ to reject
+
+
 - Why should we not use this test here?
+
+
+- Could work for meta-analysis combining p-values from many different, independent studies
 
 **Simes Test**
 
