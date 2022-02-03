@@ -331,6 +331,7 @@ In the image above, the Markov Blanket of $A$ is the set of white variable withi
 ## Evaluating Work Training Programs
 
 - Manpower Demonstration Research Corporation was a federally and privately funded program implemented in the mid-1970s to provide work experience for a period of 6-18 months to individuals who faced economic and social problems prior to enrollment
+- Program occurred between in 1976 and 1977
 - Those selected to join the program participated in various types of work such as restaurant and construction
 - Pre-treatment information was collected - earnings, education, age, ethnicity, marital status
 - All observations here are from men
