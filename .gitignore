@@ -26,7 +26,7 @@
 
 # Log created by Adobe Reader
 C:\\nppdf32Log\\debuglog.txt
- 
+
 # Swap
 [._]*.s[a-v][a-z]
 !*.svg  # comment out if you don't need vector files
@@ -231,3 +231,15 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# rmarkdown
+.Rproj.user
+.Rhistory
+.RData
+.DS_Store
+inst/doc
+doc
+Meta
+docs
+reference
+rsconnect/
