@@ -212,16 +212,41 @@ P[p < y]
 
 - Want to run $m$ tests
 
+
 - Let $H_{0,i}$ be the null hypothesis for the $i$th test where $1 \leq i \leq m$
+
+
 - Let $p_i$ be the p-value of the $i$th test for $H_{0,i}$
+
+
 - Let $R_i = 1$ if we reject $H_{0,i}$ and $R_i = 0$ if we fail to reject $H_{0,i}$ (sometimes called a discovery or positive result)
+
+
 - $R = \sum_{i=1}^m R_i$ be the number of rejected tests
+
+
 - Let $V_i = 1$ if we wrongly reject $H_{0,i}$ (false positive or type 1 error or false discovery)
+
+
 - Let $V = \sum_{i=1}^m V_i$ be the false positive (discovery) count
+
+
+- Question: If we run $m=3$ *independent* hypotheses tests at an $\alpha=0.1$ significance level, and all null hypotheses, $H_{0,1}, H_{0,2}, H_{0,3}$, are true, what is $P(V=0)$, the probability that there are zero false discoveries?
+$$\\[0.5in]$$
+
+- Question: Using the same scenario, what is $P(V>0)$, the probability that there is at least one false discovery?
+
+$$\\[0.5in]$$
 
 - **Family-wise error rate (FWER)** 
 \[P[V>0] \leq \alpha\]
   Same as $P[V=0] \geq 1-\alpha$
+  
+  
+- Question: If $m=100$, and all tests are *independent*, and the null hypothesis is true for all, what is $E[V]?$, the expected number of false discoveries?
+
+$$\\[0.5in]$$
+  
 - **Per family error rate (PFER)**
   \[E[V] \leq \alpha\]
 - **False discovery rate (FDR)** controls
@@ -235,14 +260,36 @@ P[p < y]
 \[H_0 = \bigcap_{i=1}^m H_{0,i}\]
   - Does not indicate which $H_{0,i}$ to reject, only that we can reject at least one $H_{0,i}$
 
+
+- Note: We only know the distribution of a $p$-value under the null hypothesis; we typically won't know the distribution of the $p$-value under the alternative hypothesis.
+
+
+- Note: We can only multiply $p$-values when their corresponding hypothesis tests are independent.
+
+
 ### Tests
 
 **Bonferroni**
 
 - Reject $H_{0,i}$ if $p_i \leq p_{\text{Bon}} := \frac{\alpha}{m}$
+
+
 - uses FWER, tells us which $H_{0,i}$ we can reject
 
-*proof*
+
+- Question: We have a standard, 52 playing cards (4 suits, 13 ranks).
+$P[\text{Ace OR club}] \leq P[\text{Ace}] + P[\text{club}]$
+  - A. True
+  - B. False
+
+$$\\[0.5in]$$
+
+- Union bound: For a countable number of events, $A_1, A_2,\dots$,
+$$P\left(\bigcup_{i=1}^\infty A_i\right) \leq \sum_{i=1}^\infty P(A_i)$$
+More on [union bound](https://en.wikipedia.org/wiki/Boole%27s_inequality)
+
+
+**Proof:**
 
 Let $I := \{i: H_{0,i} = 1\}$ be the set of true null hypotheses.
 \[
@@ -256,13 +303,12 @@ P[V>0]
 \end{align}
 \]
 
-More info on [union bound](https://en.wikipedia.org/wiki/Boole%27s_inequality)
-
-- Think about playing cards: $P[\text{Ace OR club}] \leq P[\text{Ace}] + P[\text{club}]$
-
 
 
 - Because of union bound, even holds when p-values are statistically dependent
+
+
+- We can also get all Bonferroni-corrected $p$-values: $\frac{p_i}{m}$ for all $i$
 
 
 - Using Bonferroni, which gene's should I recommend are associated with lymphoma?
@@ -271,10 +317,19 @@ More info on [union bound](https://en.wikipedia.org/wiki/Boole%27s_inequality)
 bcorrection <- 0.05/length(pvals)
 bcorrection
 sum(pvals <= bcorrection)
-which(pvals <= bcorrection)
+names(shipp$x)[pvals <= bcorrection]
 ```
 
-What about the independent simulated data?
+
+- Question: Which of the following interpretations are acceptable? (can choose more than one)
+  - A. The genes listed above are the most likely to be associated with lymphoma at an $\alpha = 0.05$ significance level
+  - B. At an $\alpha = 0.05$ significance level, all of the genes listed above are associated with lymphoma
+  - C. All of the genes above are significantly associated with lymphoma using a Bonferroni-corrected $\alpha = 0.05$ significance level
+  - D. Controlling the aggregate probability of having at least one false discovery at an $\alpha=0.05$ significance level, the genes listed above are associated with lymphoma
+
+$$\\[0.5in]$$
+
+- What about the independent simulated data?
 
 ```{r bcorsim}
 which(null_pvals<=bcorrection)
@@ -324,23 +379,46 @@ T = \sum_{i=1}^m -2 \log(p_i) \sim \chi^2(2m)
 - This test does not indicate which $H_{0,i}$ to reject
 
 
-- Why should we not use this test here?
+- Question: Can we use Fisher combination test here?
+  - A. Yes
+  - B. No
+  - C. Not sure
 
+$$\\[0.5in]$$
 
-- Could work for meta-analysis combining p-values from many different, independent studies
+- Question: We have 10 clinical trial studies on the same treatment on different study participants.
+Can we use Fisher combination here?
+  - A. Yes
+  - B. No
+  - C. Not sure
+
 
 **Simes Test**
 
-- Uses global null framework
+- Uses global null framework, i.e. at least one null hypothesis is false
+
+
 - Order all p-values, $p_{(1)}\leq p_{(2)}\leq \dots \leq p_{(m)}$ for the $m$ hypotheses
+
+
 - Simes test statistic
 \[ p_{\text{Simes}} = \min_{i\in [m]} \left\{ \frac{m p_{(i)}}{i} \right\}\]
+
+
 - Reject global null if $p_{\text{simes}} \leq \alpha$
-  - Equivalent: Reject global null if any $p_{(i)} \leq \frac{i\alpha}{m}$
+
+
+- Equivalent: Reject global null if any $p_{(i)} \leq \frac{i\alpha}{m}$
+
+
 - Proof is a little more complicated
   - Need to show that $p_{\text{Simes}} \sim \text{Unif}(0,1)$
   - Uses order statistics properties to show this
+
+
 - Does not require all $p_i$ are independent
+
+
 - More powerful (type II error is smaller) than Bonferroni global null test
   - Bonferroni will reject global null when $m p_{(1)} \leq \alpha$
 
@@ -352,15 +430,45 @@ simes(null_pvals)
 ```
 
 - Coding tip: DRY (don't repeat yourself)
-- if you're tempted to copy your own code to reuse it, write a function for it instead
+  - if you're tempted to copy your own code to reuse it, write a function for it instead
+
 
 **Kolmogorov-Smirnov Test**
 
+- Assume we observe 10,000 $p$-values, all between 0.2 and 0.4.
+
+
+- Question: Are there any significant Bonferroni-corrected $p$-values?
+  - A. Yes
+  - B. No
+  - C. Not sure
+
+$$\\[0.5in]$$
+
+- Question: Would Simes test give a significant $p$-values?
+  - A. Yes
+  - B. No
+  - C. Not sure
+
+$$\\[0.5in]$$
+
+- Question: Can we (logically) reject global null here?
+  - A. Yes
+  - B. No
+  - C. Not sure
+
+
 ![image from wikipedia](./KS_Example.png)
 
-- compared empirical cdf to theoretical cdf
-  - Here: Assess fit of empirical p-value cumulative distribution compared to uniform
+- Kolmogorov-Smirnov Test compares an empirical cdf to a theoretical cdf (not only uniform)
+
+
+- Here: Assess fit of empirical p-value cumulative distribution compared to uniform
+
+
 - Uses global null framework
+
+
 - Empirical CDF of p-values is
 \[\hat F_m(t) = \frac{1}{m} \sum_{i=1}^m I(p_i \leq t)\]
 - Uniform CDF $F(t) = t$ for $t\in [0,1]$
@@ -377,11 +485,23 @@ abline(c(0,0), c(1,1))
 
 - Test statistic
 \[T_m = \sup_{t\in [0,1]} \left| \hat F_m(t) - t \right|\]
-- Using Hoeffding's inequality,
-\[P\left[ T_m > t \right] \leq 2\exp\left(-2t^2\right)\]
-- Note: here so do not know the CDF of the test statistic, but we *consentration inequality* above allows us to bound the $p$-value
+
+
+- Reject global null when $T_m$ is large
+
+
+- We don't know the CDF of the test statistic, but we *consentration inequality* above allows us to bound the $p$-value
+
+
+- Using Hoeffding's inequality, under the null hypothesis
+\[P\left[ T_m > \epsilon \right] \leq 2\exp\left(-2\epsilon^2\right)\]
+
+
+- Want to find $\epsilon$ so that $2\exp\left(-2\epsilon^2\right)\leq \alpha$
+
+
 - Reject global null if
-\[T_m > \sqrt{\frac{2\log(\frac{2}{\alpha})}{2}}\]
+\[T_m > \sqrt{\frac{1}{2}\log\left(\frac{2}{\alpha}\right)}\]
 
 ```{r ksttest}
 ks.test(pvals, runif(100000))
@@ -392,7 +512,9 @@ See [ks.test documentation](https://stat.ethz.ch/R-manual/R-devel/library/stats/
 
 **Benjamini-Hochberg**
 
-- Method for controlling the false discovery rate (FDR)
+- Method for controlling the false discovery rate (FDR), $E\left[\frac{V}{R}\right]$, the expected ratio of false discoveries to all discoveries
+
+
 - Interpretation: At an FDR of $\alpha$, we would expect, at most, $\alpha$ of our significant tests to be false positives
 
 - Method:
@@ -405,23 +527,41 @@ See [ks.test documentation](https://stat.ethz.ch/R-manual/R-devel/library/stats/
 
 *Proof outline*
 
-Recall
-\[\text{FDR} = E\left[\frac{V}{R}\right] = E\left[\frac{\text{# Type 1 Error}}{\text{# Rejections}}\right].\]
-Let $W_i=1$ if $H_{0,i}$ is true and $W_i=0$ otherwise.
-Let $G(t)$ be the true CDF of the p-values and let $\hat G(t)$ be the empirical CDF as before.
+- Recall
+\[\text{FDR} = E\left[\frac{V}{R}\right] = E\left[\frac{\text{# Type 1 Error}}{\text{# Rejections}}\right]\]
+
+
+- Let $W_i=1$ if $H_{0,i}$ is true and $W_i=0$ otherwise.
+
+
+- Let $G$ be the true CDF of the p-values and let $\hat G$ be the empirical CDF as before.
+
+
+- Let $t$ be the significance level.
+
+
 \[
 \begin{align}
 \text{FDR} 
-&= E\left[\frac{V}{R}\right]\\
-&= E\left[\frac{\frac{1}{m}\sum_{i=1}^m W_i I(p_i < t)}{\frac{1}{m}\sum_{i=1}^m I(p_i < t)}\right]\\
-&\approx \frac{E\left[ \frac{1}{m}\sum_{i=1}^m W_i I(p_i < t) \right]}{E\left[\frac{1}{m}\sum_{i=1}^m I(p_i < t)\right]}\\
-&= \frac{t |I|}{G(t)} \leq \frac{t}{G(t)} \approx \frac{t}{\hat G(t)}
+&= E\left[\frac{V}{R}\right] &\text{definition of FDR}\\
+&= E\left[\frac{\sum_{i=1}^m W_i I(p_i < t)}{\sum_{i=1}^m I(p_i < t)}\right] & \frac{\text{# false discoveries}}{\text{# all discoveries}}\\
+&\approx \frac{E\left[ \frac{1}{m} \sum_{i=1}^m W_i I(p_i < t) \right]}{E\left[ \frac{1}{m}\sum_{i=1}^m I(p_i < t)\right]} &\text{Approximately}\\
+&= \frac{\frac{1}{m}\sum_{i=1}^m W_i E\left[ I(p_i < t) \right]}{\frac{1}{m} \sum_{i=1}^m E\left[I(p_i < t)\right]} & \text{linearity of expectation}\\
+&= \frac{\frac{t}{m}\sum_{i=1}^m W_i}{G(t)} &\frac{\text{null hypothesis true}}{\text{true $p$-value CDF}}\\
+&\leq \frac{t}{G(t)} & \frac{1}{m}\sum_{i=1}^m \leq 1\\
+&\approx \frac{t}{\widehat G(t)} &\text{empirical CDF close to true CDF}
 \end{align}
 \]
-Let $t=p_{(i)}$ for some $i$.
-Notice that $\hat G(p_{(i)})=\frac{i}{m}$.
-Then $\text{FDR}= \frac{p_{(i)} m}{i}$.
-Setting this value equal to $\alpha$ and solving for $p_{(i)}$, we get the BH test statistic.
+
+- Let $t=p_{(i)}$ for some $i$.
+
+
+- Notice that $\widehat G(p_{(i)})=\frac{i}{m}$, so that
+$$\text{FDR}\leq \frac{p_{(i)}}{\widehat G(p_{(i)})} = \frac{p_{(i)} m}{i}$$
+
+- We can use BH-adjusted p-values also: $\frac{p_{(i)} m}{i}$
+
+
 
 ```{r bh}
 bh_adj <- p.adjust(pvals, 'BH')
@@ -431,18 +571,32 @@ which(bh_adj < 0.05)[1:10]
 sum(bh_adj<0.05)
 ```
 
+
+- Question: Which interpretations are acceptable here?
+  - A. Using Benjamini-Hochberg false discovery rate of 0.05, 1232 genes were associated with lymphoma
+  - B. 1232 genes were associated with lymphoma allowing for a 5% false discovery rate
+
+
 See [p.adjust documentation](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html) for more info
 
 **Final thoughts on multiple testing**
 
+
 - Family-wise error and false discovery
+
+
 - Only Bonferroni and Benjamini-Hochberg indicate which null hypotheses to reject, all others are global null
+
+
 - Many applied papers do not use multiple testing procedures but should
+
+
 - Prediction, causation, and dependence
   - Smoking and cancer can both be used to predict death, but should we use both?
 
-```{dot chain, echo=FALSE, out.width = '20%'}
+```{dot chain, echo=FALSE, out.width = '60%'}
 digraph G {
+  rankdir="LR"
   Smoking -> Cancer
   Cancer -> Death
 }
@@ -512,6 +666,16 @@ digraph G {
   
 ## Penalized Regression
 
+
+- Using tests, we looked for *marginal* associations between each gene and lymphoma
+
+
+- If we need to *control* for other variables, we have to use regression
+
+
+- Penalized regression was developed for high dimensional data
+
+
 **Ordinary least squares**
 \[\text{Have }
 \mathbf{X} = \begin{bmatrix}
@@ -563,13 +727,36 @@ OLS Cons:
 - When $n \not\gg p$, *overfitting* can be a problem
 - $\left(\mathbf X^T \mathbf X\right)^{-1}$ only exists for $n >> p$.
 
-**Ridge Regression**
+### Ridge Regression
 
-\[\hat\beta = \text{arg} \min_\beta \frac{1}{n}\sum_{i=1}^n\left\| y_i - X_i^T\mathbf{\beta}\right\|^2 + \lambda\|\beta\|_2^2\]
 
-Similar to OLS, $\hat \beta$ also has a closed form
+- Ridge regression uses the OLS optimization problem augmented with a penalty for the size of $\beta$
+\[\hat\beta = \text{arg} \min_\beta \left\| y - X^T\mathbf{\beta}\right\|_2^2 + \lambda\|\beta\|_2^2\]
+where $y$ is a $n\times 1$ vector and $X$ is a $n\times p$ matrix
+
+
+- We can think of this optimization as a compromise between fit and size of $\beta$
+
+
+- Similar to OLS, $\hat \beta$ also has a closed form
 \[\hat \beta = \left(\mathbf X^T \mathbf X + \lambda I \right)^{-1} \mathbf X^T \mathbf y\]
 where $I$ is the identity matrix
+
+
+- Sometimes written differently
+\[\hat\beta = \text{arg} \min_\beta \frac{1}{n}\sum_{i=1}^n\left( y_i - X_i^T\mathbf{\beta}\right)_2^2 + \lambda\|\beta\|_2^2\]
+
+
+- This may change the size of $\lambda$ but $\lambda$ is a nuisance parameter
+
+
+- Question: As $\lambda$ increases, $\beta$
+  - A. increases
+  - B. decreases
+  - C. stays the same
+  - D. not sure
+
+$$\\[0.5in]$$
 
 Proof:
 Taking the gradient (derivative with respect to vector) and setting it equal to zero,
@@ -580,41 +767,117 @@ Taking the gradient (derivative with respect to vector) and setting it equal to 
 &= -2\mathbf y\mathbf X + 2\mathbf X^T\mathbf X\beta +2\lambda\beta = 0~.
 \end{align}
 
-Solving for zero, we get the solution above.
+
+- Solving for zero, we get the solution above.
 
 ### Using `GLMNET`
 
+
+- `GLMNET` is typically the go-to R package for penalized regression
+
+
 - Below: create a dataset where 10 variable are associated with the outcome and 20 are not
+
+
 - We are choosing the true $\beta$ randomly from a uniform distribution
 
-```{r ridge}
+
+```{r makeHighDimData}
 ### Generating data
 sample_size <- 50 # remember DRY
 set.seed(1234)
-num_active_vars <- 10
-num_null_vars <- 20
+num_active_vars <- 10 # 10 variables will be associated with the outcome
+num_null_vars <- 20 # 20 variables will not be associated with the outcome
 true_beta <- 2*runif(num_active_vars) # randomly choosing true beta
-true_beta
+true_beta # printing out active beta values
+
+# active_x values will be used to construct y
 active_x <- matrix(rnorm(sample_size*num_active_vars), nrow=sample_size)
+
+# null_x won't be used to construct y but will be included in the data
 null_x <- apply(matrix(3*rnorm(sample_size*num_null_vars), nrow=sample_size), 2,
                 function(x) x + 10*runif(1))
+
+# constructing y with noise
 y <- active_x %*% true_beta + rnorm(sample_size)
+
 dim(y) #sanity check
+
+# making data frame
 dat <- data.frame(cbind(active_x, null_x, y))
-dim(dat)
-names(dat)
+
+dim(dat) # sanity check
+
+names(dat) #sanity check
 names(dat)[31] <- 'Y' # renaming response variable
 head(dat)
+```
 
+
+- Using the `glmnet` function, run ridge regression (`alpha=0`) with various values for $\lambda$
+
+
+- `glmnet` does not use the standard R convention `y ~ x1 + x2 + x3` formula
+
+
+- must give it a y vector and X design matrix
+
+
+- **Must standardize variables**:
+  - standardizing a variable: $x \rightarrow \frac{x - \hat\mu}{\hat \sigma}$
+  - constraints on the size of the coefficients associated to each variable
+  - this value will depend on the magnitude of each variable
+  - necessary to center and reduce, or standardize, the variables
+  - already done here because all variables generated using standard normal
+
+
+```{r runRidge}
 # install.packages("glmnet", repos = "http://cran.us.r-project.org") # only need 1st time
 library(glmnet)
 design_mat <- cbind(active_x, null_x) # glmnet only takes matrices, not dataframes
 l2_fit <- glmnet(design_mat, y, family="gaussian", alpha=0) # alpha = 0 gives Ridge regression
-plot(l2_fit, xvar='lambda', label=TRUE)
-names(l2_fit)
-coef(l2_fit)[1:10,1:5]
-l2_fit$lambda
+```
 
+
+- Because of closed form, fast to compute
+
+
+- Plot change in coefficient estimates with lambda
+
+
+```{r ridgePlots}
+plot(l2_fit, xvar='lambda', label=TRUE)
+```
+
+
+- As $\lambda$ gets bigger, coefficients shrink
+
+
+- coefficients get closer to zero but are never exactly zero
+
+
+- Question: Is this plot helpful for non-statistical experts?
+  - A. No
+  - B. Yes, with explanation
+  - C. Yes, without explanation
+  - D. Not sure
+
+$$\\[0.5in]$$
+
+- Let see what else `glmnet` gives us using `names`
+
+
+```{r exploreglmnet}
+names(l2_fit)
+coef(l2_fit)[1:10,1:4]
+l2_fit$lambda
+```
+
+
+- Let's see what happened to the active versus non-active coefficient estimates
+
+
+```{r labeledRidgePlot}
 glmnet_plot <- function(fit, num_active){ #assumes active vars are first
   plot(0, type='n', ylim = range(coef(fit)[-1,]), xlim = log(range(fit$lambda)),
      ylab = "Coefficient", xlab="log(lambda)")
@@ -626,19 +889,37 @@ glmnet_plot <- function(fit, num_active){ #assumes active vars are first
   }
 }
 glmnet_plot(l2_fit, num_active_vars)
+
+true_beta
 ```
 
-- As $\lambda$ gets bigger, coefficients shrink
-- Notice that the coefficients get closer to zero but are never exactly zero
-- Because of closed form, fast to compute
 
-**LASSO**
+- Question: How should we choose $\lambda$?
+  - A. AIC
+  - B. Deviance
+  - C. Cross validation
+  - D. Not sure
 
-\[\hat\beta = \text{arg} \min_\beta \frac{1}{n}\sum_{i=1}^n\left( y_i - X_i^T\mathbf{\beta}\right)^2 + \lambda\|\beta\|_1\]
+$$\\[1in]$$
+
+### LASSO
+
+
+- LASSO (least absolute shrinkage and selection operator) uses an $L_1$ penalty, not an $L_2$ (Euclidean) penalty like ridge
+
+
+\[\hat\beta = \text{arg} \min_\beta \left\| y - X^T\mathbf{\beta}\right\|_2^2 + \lambda\|\beta\|_1\]
 
 - The $L_1$ norm or taxicab norm, $\|x\|_1=|x_1|+|x_2|+\cdots+|x_p|$ for $x\in \mathbb{R}^p$
 
+
+- In $\mathbb R^2$, distance between $(x_1, y_1)$ and $(x_2, y_2)$ is $\|(x_1, y_1)-(x_2, y_2)\|_1 = |x_1-x_2|+|y_1-y_2|$
+
+
 ![from wikipedia](./Manhattan_distance.png)
+
+
+- Using `alpha=1` in `glmnet` gives lasso parameter estimates
 
 
 ```{r lasso}
@@ -647,11 +928,25 @@ glmnet_plot(l1_fit, num_active_vars)
 ```
 
 - $L_1$ penalty generates sparse $\beta$ (many zeros)
-- As $\lambda$ gets bigger, $\beta$ shrinks and some go to zero
+
+
+- As $\lambda$ gets bigger, $\beta$ shrinks and some go to exactly zero
+
+
 - Because of the absolute value, this function is not differentiable everywhere, standard optimization uses coordinate descent, also fast
+
+
 - if $p>n$, lasso selects at most $n$ variables
+
+
 - if using grouped (dummy) variables (like race or other categorical variables with more than 2 levles), lasso will ignore groups
-- Can be erratic on collinear data
+
+
+- Question: Why is LASSO helpful?  (short answer)
+
+$$\\[0.5in]$$
+
+- Can be erratic on collinear data (covariates associated)
 
 ```{r lassoCollinear}
 set.seed(1234)
@@ -662,18 +957,30 @@ l1_fit_collin <- glmnet(collin_dm, y, family="gaussian", alpha=1)
 glmnet_plot(l1_fit_collin, num_active_vars)
 ```
 
-**Difference between Ridge and LASSO**
+### Difference between Ridge and LASSO
 
 - Why does the $L_1$-norm penalty in LASSO zero out some $\beta$ values but not for the $L_2$-norm penalty in Ridge?
 
 ![from Elements of Statistical Learning](./L2vsL1penalty.png)
 
-- Think of XY-plane as all possible values of $\beta = (\beta_1,\beta_2)$
-- Without the penalty $h(\beta_1,\beta_2) = \frac{1}{n}\sum_{i=1}^n (y_i-X_i^T\beta)^2$
-  - because $h$ is quadratic, it forms a [parabolid](https://en.wikipedia.org/wiki/Paraboloid)
-  - Want to find values of $(\beta_1,\beta_2)$ that minimize $h$
-- $g(\beta_1,\beta_2) = \|\beta\|_1$ is an upside down pyramid with its bottom point at the origin
+- Think of $xy$-plane as all possible values of $\beta = (\beta_1,\beta_2)$
+
+
+- $z$-axis is the value of $\left\| y - X^T\mathbf{\beta}\right\|_2^2 + \lambda\|\beta\|_1$
+
+
+- The optimization problem wants to make $\left\| y - X^T\mathbf{\beta}\right\|_2^2 + \lambda\|\beta\|_1$ small
+
+
+- Least squares is quadratic as a function of $\beta$, $h(\beta_1,\beta_2) = \sum_{i=1}^n (y_i-X_i^T\beta)^2$, forms a [paraboloid](https://en.wikipedia.org/wiki/Paraboloid), or bowl shape
+
+
+
+- $g(\beta_1,\beta_2) = \|\beta\|_1$ is an upside down square pyramid with its bottom point at the origin
+  - e.g. a point, $b$, on the line between $(2,0)$ and $(0,2)$,  $\|b\|_1=2$
   - the level contours create empty diamond-shapes ($\{(x_1,x_2): \|(x_1,x_2)\|_1=z\}$ is a diamond-shape)
+
+
 - By adding these two functions, the optimization must balance the contribution from each
   - $h$ wants the paraboid min and $g$ wants the origin
   - Because $g$ has a sharp point, the lowest contour of $h$ will likely hit there first
@@ -682,7 +989,7 @@ glmnet_plot(l1_fit_collin, num_active_vars)
 
 **Elastic Net**
 
-\[\hat\beta = \text{arg} \min_\beta \frac{1}{n}\sum_{i=1}^n\left( y_i - X_i^T\mathbf{\beta}\right)^2 + \lambda\left[(1-\alpha)\|\beta\|_2^2/2 + \alpha|\beta\|_1\right]\]
+\[\hat\beta = \text{arg} \min_\beta \left( y - X^T\mathbf{\beta}\right)^2 + \lambda\left[(1-\alpha)\|\beta\|_2^2/2 + \alpha|\beta\|_1\right]\]
 
 ```{r elastic}
 l5_fit <- glmnet(design_mat, y, family="gaussian", alpha=0.5) 
@@ -699,59 +1006,188 @@ glmnet_plot(l5_fit, num_active_vars)
   
 ### Penalized Regression as Bayesian Method
 
+
 - Bayes' Theorem $$P(H|E)=\frac{P(E|H) P(H)}{P(E)}$$ where $P(E)\neq 0$
+
+
 - Note: Bayes' theorem is also frequently used outside of Bayesian methods
-- In Bayesian inference, the goal is to estimate $P(H|E)$ by estimating $P(E|H)$ and $P(H)$
-- $P(H|E)$, the *posterior probability*, is the probability $H$ given evidence (data) $E$
-- $P(H)$, the *prior probability*, is the probability of $H$ before evidence (data) is observed
-- $P(E|H)$ is the *likelihood*
-- $P(E)$ is the marginal likelihood but is frequently used to make sure that the probability sums to one
-- In Bayesian inference, we want to estimate the parameter, $\theta$, to be a random variable, with a prior distribution, $\pi(\theta)$
-- We use data, $x$, to improve our estimate of $\theta$, $$\pi(\theta|x) = \frac{f(x|\theta)\pi(\theta)}{m(x)}$$ where $m(x)=\int f(x|\theta)\pi(\theta)d\theta$
+
+
+- Bayesian: parameter, $\theta$ is a random variable
+
+
+- Frequentist: parameter, $\theta$ unknown, but fixed value 
+
+
+- Question: How well you feel like you already understand Bayesian inference?
+  - A. Not at all
+  - B. 
+  - C. Somewhat
+  - D. 
+  - E. Very well
+
+$$\\[1in]$$
+
+- **Bayesian inference goal:** estimate $P(\theta|x_1,\dots, x_n)$, the probability of parameter given data, by estimating the likelihood $P(x_1,\dots, x_n|\theta)$ assuming the parameter has some prior density, $P(\theta)$
+
+
+- $P(\theta|x_1,\dots, x_n) := \pi(\theta | x_1, \dots, x_n)$, the **posterior** probability, is the probability $\theta$ given evidence (data) $x_1,\dots, x_n$
+
+
+- $P(\theta) := \pi(\theta)$, the **prior** probability, is the probability of $\theta$ before evidence (data) is observed
+
+
+- $P(x_1,\dots, x_n|\theta)$ is the **likelihood**; density is $f(x;\theta)$, likeihood is $f(x_1,\dots, x_n;\theta) = \prod_{i=1}^n f(x_i;\theta)$ because of independence
+
+
+- $P(x_1,\dots, x_n) := m(x)$ is the marginal likelihood but is frequently used to make sure that $\int_\theta \frac{f(x_1, \dots, x_n;\theta) \pi(\theta)}{m(x)}d\theta = 1$
+
+
+- Set $m(x) = \int_\theta f(x_1, \dots, x_n;\theta) \pi(\theta) d\theta$, a constant in terms of $\theta$
+
+
+- Calculate posterior: 
+$$\pi(\theta|x_1,\dots, x_n) = \frac{f(x_1,\dots, x_n|\theta)\pi(\theta)}{m(x)} \propto \prod_{i=1}^n f(x_i;\theta) \pi(\theta)$$
+
+
+
+![Image from Medium.com](baysian.png)
+
+
+- $\theta$ is still a random variable, with updated density:
+$$\pi(\theta|x_1,\dots, x_n) = \frac{f(x_1,\dots, x_n|\theta)\pi(\theta)}{m(x)}$$
+
+- Usually, only need mean and variance of posterior for point estimate and confidence interval
+
+
 - Example:
 Let $X_1,\dots,X_n\sim\text{Bernoulli}(p)$ and $Y=\sum_i X_i$ (binomial random variable).
-Goal: Estimate $p$.
-  - Assume $p\sim\text{Beta}(\alpha,\beta)$ is a prior distribution for $p$.
-  That is, $$\pi(p) = \frac{p^{\alpha-1}(1-p)^{\beta-1}}{B(\alpha,\beta)}$$ where $B$ is the beta function.
-  Then $$\pi(p|Y) \propto \underbrace{\binom{n}{Y}p^Y(1-p)^{n-Y}}_{\text{likelihood}} \times     \underbrace{\frac{p^{\alpha-1}(1-p)^{\beta-1}}{B(\alpha,\beta)}}_{\text{prior}} \propto p^{Y+\alpha-1}(1-p)^{n-Y+\beta-1}$$
-  Then $$p|Y\sim\text{Beta}(Y+\alpha,n-Y+\beta)$$ so that $$\hat p = \frac{Y+\alpha}{\alpha+\beta+n}$$ using the mean of a [Beta distributed](https://en.wikipedia.org/wiki/Beta_distribution) random variable
+
+
+- Goal: Estimate $p$.
+
+
+- Assume $p\sim\text{Beta}(\alpha,\beta)$ is a prior distribution for $p$.
+That is, $$\pi(p) = \frac{p^{\alpha-1}(1-p)^{\beta-1}}{B(\alpha,\beta)}$$ where $B$ is the beta function.
+Then $$\pi(p|Y) \propto \underbrace{\binom{n}{Y}p^Y(1-p)^{n-Y}}_{\text{likelihood}} \times     \underbrace{\frac{p^{\alpha-1}(1-p)^{\beta-1}}{B(\alpha,\beta)}}_{\text{prior}} \propto p^{Y+\alpha-1}(1-p)^{n-Y+\beta-1}$$
+
+
+- Then $$p|Y\sim\text{Beta}(Y+\alpha,n-Y+\beta)$$ so that $$\hat p = \frac{Y+\alpha}{\alpha+\beta+n}$$ using the mean of a [Beta distributed](https://en.wikipedia.org/wiki/Beta_distribution) random variable
+
+
 - Penalized regression was introduced as a frequentist method in 1996
+
+
 - [Park and Casella](https://people.eecs.berkeley.edu/~jordan/courses/260-spring09/other-readings/park-casella.pdf) showed that it was equivalent to a Bayesian paradigm where parameters have a mean-zero Gaussian prior (ridge regression) or a meanzero-Laplace prior (lasso)
-- Lasso as an optimization: $$\beta_{\text{Lasso}} = \arg\min_\beta \|y-X\beta\|^2 + \lambda\sum_{j=1}^p |\beta_j|$$
+
+
+- Lasso as an optimization: $$\beta_{\text{Lasso}} = \arg\min_\beta \|y-X\beta\|^2 + \lambda \|\beta\|_1$$
+
+
 - Lasso as Bayesian: $y\sim\text{Gaussian}(X\beta, \sigma^2I_n)$ with prior, $\beta_j\sim \frac{\lambda}{2\sigma}e^{-\lambda|\beta_j|/\sigma}$ (Laplace distribution)
-- Ridge as optimization: $$\beta_{\text{Ridge}} = \arg\min_\beta \|y-X\beta\|^2 + \lambda\sum_{j=1}^p \beta_j^2$$
-- Ridge as Bayesian: $y\sim\text{Gaussian}(X\beta,\sigma^2I_n)$ with prior, $\beta_j\sim \text{Gaussian}(0, \lambda^{-1})$ (Gaussian distribution)
+
+
+- Ridge as optimization: $$\beta_{\text{Ridge}} = \arg\min_\beta \|y-X\beta\|^2 + \lambda \|\beta\|_2^2$$
+
+
+- Ridge as Bayesian: $y\sim\text{Gaussian}(X\beta,\sigma^2I_n)$ with prior, $\beta_j\sim \text{Gaussian}\left(0, \frac{\sigma^2}{\lambda^2}\right)$ (Gaussian distribution)
+
+
 $$
 \begin{align}
 \text{Posterior Distribution}
-&=\underbrace{\prod_{i=1}^n \text{Gaussian}(y_n|X\beta, \sigma^2I_n)}_{\text{likelihood}} \times \underbrace{\text{Gaussian}(\beta|0, \lambda^{-1}I_p)}_{\text{prior}}\\
-&\propto \exp\left(-\sum_{i=1}^n \frac{(y_i-X_i\beta)^2}{\sigma}\right) \times \exp\left(-\lambda\sum_{j=1}^p \beta_j^2\right) \\
-&= \exp\left(-\sum_{i=1}^n \frac{(y_i-X_i\beta)^2}{\sigma} - \lambda\sum_{j=1}^p \beta_j^2\right) \sim \text{Gaussian}
+&=\underbrace{\prod_{i=1}^n \text{Gaussian}(y_n|X\beta, \sigma^2I_n)}_{\text{likelihood}} \times \underbrace{\text{Gaussian}\left(\beta \middle|0, \frac{\sigma^2}{\lambda^2}I_p\right)}_{\text{prior}}\\
+&\propto \exp\left(-\sum_{i=1}^n \frac{(y_i-X_i\beta)^2}{2\sigma}\right) \times \exp\left(-\frac{\lambda}{2\sigma}\sum_{j=1}^p \beta_j^2\right) \\
+&= \exp\left(-\frac{1}{2\sigma}\|y-X\beta\|_2^2 - \frac{\lambda}{2\sigma}\| \beta\|_2^2\right)
 \end{align}
 $$
-- Using standard methods to optimize this over $\beta$, we get a similar result to $\beta_\text{Ridge}$ ($\lambda$ must be scaled to accomodate $\sigma$)
+
+- Optimize the posterior over $\beta$:
+$$\arg\max_\beta \exp\left(-\frac{1}{2\sigma}\|y-X\beta\|^2 - \frac{\lambda}{2\sigma}\| \beta\|_2^2\right) = \arg\min_\beta \left(\|y-X\beta\|^2 +\lambda \|\beta\|^2\right)$$
+
 
 ### Overfitting and Model Validation
 
 ![[image from here](https://www.quora.com/What-are-the-key-trade-offs-between-overfitting-and-underfitting)](./overfitting.png)
 
-- Data generation paradigm: $Y = f(X) + \epsilon$ = signal + random noise
-- prediction goal: estimate $f$ with a model $\hat f$
-- Overfitting is including random noise into a prediction model
-- Complex models are more likely to overfit
-- Simple models are more likely to underfit (miss signal)
+
+- Question: Which of the following is likely going to overfit?  (select multiple)
+  - A. Determining a GLM model and variables first, then fitting the model
+  - B. Using the data with AIC to choose the best GLM model and subset of variables
+  - C. Using the data with penalized regression to choose the best value of $\lambda$
+  - D. Using the data to fit a regression tree
+
+$$\\[0.5in]$$
+
+
+- Data generation paradigm: 
+$$Y = \underbrace{f(X)}_{\text{signal}} + \underbrace{\epsilon}_{\text{noise}}$$
+
+- Signal: Typically want $f(X) = E[Y|X]$
+
+
+- Noise: Variation in $Y$ that cannot be explained using $X$, generally $X\perp \epsilon$ 
+
+
+- Prediction goal: estimate $f$ as closely as possible with a model $\hat f$
+
+
+- Overfitting uses variation in $\epsilon$ to explain $Y$
+
+
+- Question: Which model is most likely to overfit? (choose one)
+  - A. `Y ~ X1 + X2`
+  - B. `Y ~ X1 + X2 + X3`
+  - C. `Y ~ X1 + X2 + X3 + X4`
+  - D. Not sure
+
+
+- Question: Which is most likely to underfit? (choose one)
+
+$$\\[0.5in]$$
+
+- Complex models, with more parameters, are more likely to overfit
+
+
+- Simple models, with less parameters, are more likely to underfit (miss signal)
+
+
 - Issue: how much complexity is too much?
+
+
 - Question: Does a large $\lambda$ correspond more or less complexity?
+  - A. More complexity
+  - B. Less complexity
+  - C. Not sure
+
+
 - How do we assess fit?
+
 
 **Validation**
 
-- If a model has good fit, it should be able to make accurate predictions on new data
-- Held out validation: 
-  1. Randomly split data into training set and test set (why random?)
-  2. Fit many different models on the training set
-  3. Use each model to make predictions on test set
-  4. Evaluate predictions and choose simplest model with most accurate predictions
+- If a model has good fit, it should be able to make accurate predictions on *new* data
+
+
+- Accuracy is determined by a *loss function* (typically chosen by $Y$ data type)
+  - Mean squared error: $L(\hat Y, Y) = \frac{1}{n}\sum_{i=1}^n (\hat Y_i -Y_i)$
+  - Zero-one loss: $L(\hat Y, Y) = \frac{1}{n}\sum_{i=1}^n I(\hat Y_i \neq Y_i)$
+
+
+Held out validation:
+
+
+1. Randomly split data into training set, $(X_\text{tr}, Y_\text{tr})$, and test set, $(X_\text{te}, Y_\text{te})$ (why random?)
+
+
+2. Fit models, $\hat f_1, \dots, \hat f_K$, on the training set, $(X_\text{tr}, Y_\text{tr})$
+
+
+3. For each model, $\hat f_1, \dots, \hat f_K$, use the $X$ values from the training set to get predicted $Y$ values, $\hat f_1(X_\text{te}), \dots, \hat f_k(X_\text{te})$
+
+
+4. Evaluate predictions using loss function, $L(\hat f_1(X_\text{te}), Y_\text{te}) \dots, L(\hat f_K(X_\text{te}), Y_\text{te})$ and choose simplest model with smallest loss
+
   
 ```{r heldout}
 # this code is for learning
@@ -774,27 +1210,48 @@ test_preds
 # step 4
 # calculating mean squared error for each model
 mses <- apply(test_preds, 2, function(x) mean((x-y[test_ind])^2))
-cbind(mses, train_fit$lambda) # showing MSE with lambda value
-plot(log10(train_fit$lambda), mses, type='b')
-coef(train_fit, s=0.56234133) # coefficients for chosen model
-
-# Comparing to the real betas
-true_beta
+lambdas <- train_fit$lambda
+cbind(lambdas, mses) # showing MSE with lambda value
+plot(log10(train_fit$lambda), mses, type='b', ylab='Empirical Mean Squared Error', xlab='log10(lambda)')
 ```
+
+- Comparing estimated values with true values
+
+
+- Which are bigger?
+
+
+```{r}
+true_vals <- c(0,true_beta, rep(0, 20))
+cbind(coef(train_fit, s=0.56234133), true_vals)
+```
+
 
 **Cross Validation**
 
+- Normally used over held out validation
+
+
+- Runs held out validation $k$-fold times
+
+
+Steps:
+
+
+1. Partition data into $k$ folds
+
+
+2. Run held out validation $k$ times:
+  i. On step $j$, remove fold $j$, train models on all other folds
+  ii. Get predictions with trained models on $j$th fold
+  iii. Save predictions
+
+
+3. Evaluate model using loss function
+
+
 ![[image from here](https://www.kaggle.com/alexisbcook/cross-validation)](./crossvalidation.png)
 
-- Normally used over held out validation
-- Runs held out validation $k$-fold times
-Steps:
-1. Partition data into $k$ folds
-2. Run held out validation $k$ times:
-  i. On step $j$, train model on all folds with the $j$th fold removed
-  ii. Run predictions with trained model on $j$th fold
-  iii. Save predictions
-3. Evaluate model using loss function
 
 - glmnet does all of this for you
 
@@ -813,14 +1270,98 @@ plot(cv_fit5, sub='Elastic Net')
 
 **Gene data with penalized regression**
 
-Which penalized regression model should we use?
+Question: Which penalized regression model should we use? (choose one)
+  - A. Ridge
+  - B. Lasso
+  - C. Elastic Net
+  - D. Not sure
+
+$$\\[1in]$$
+- Because there are not many rows of data (71), first using cross validation on all data to choose $\lambda$
+
+- Then using the optimal $\lambda$ on entire dataset
+
+- If there were more data, I would set aside more data to do the final fit
+
 
 ```{r elasticnetGenedat}
 gene_mat <- as.matrix(shipp$x)
-gene_fit <- glmnet(gene_mat, shipp$y, family="binomial", alpha=0.5)
-plot(gene_fit, xvar='lambda', label=TRUE)
+# changing outcome to 0's and 1's
+lymph_type <-ifelse(shipp$y == 'FL', 1, 0)
 
+# running cross validation using elastic net
 gene_fit_cv <- cv.glmnet(gene_mat, shipp$y, family="binomial", alpha=0.5, nfolds=5)
 plot(gene_fit_cv)
+# optimal value of lambda
+gene_fit_cv$lambda.min
+
+# running Lasso on all data with optimal lambda
+gene_fit <- glmnet(gene_mat, lymph_type, family="binomial", alpha=0.5, lambda = gene_fit_cv$lambda.min)
 ```
 
+```{r}
+nonzero <- order(gene_fit$beta, decreasing = T)[1:sum(gene_fit$beta >0)]
+#nonzero <- which(gene_fit$beta >0)
+exp_beta <- exp(gene_fit$beta[nonzero])
+names(exp_beta) <- names(shipp$x)[nonzero]
+plot(exp_beta, ylab='Shrinkage odds ratio', xlab='Gene', xaxt='n', pch=20, xlim=c(1,length(nonzero)+0.75), ylim=c(1, 1.0075), main='Gene Odds Ratios for Predicting FL vs DLBCL')
+text(1:length(nonzero)+1, exp_beta, names(exp_beta), cex=0.6, pos=3, offset=0.6, srt=45)
+data.frame(exp_beta)
+```
+
+
+- Interpretation: After controlling for all other genes, 38 genes were predictive for FL vs DLBCL.  Table 1 in the appendix give the shrinkage odds ratios for determining FL.  These values can be interpreted as magnitude controlled association with FL vs DLBCL.
+
+
+### Graphical Lasso
+
+- Lasso can also be used to construct *conditional independence graphs*
+
+
+- Conditional independence graphs are graphical models that connect two variables (nodes) if they are dependent after conditioning on all other variables
+
+
+- Given a Bayesian network, one can construct the corresponding conditional independence graph.
+
+
+![image from Kevin Gimpel](moralizedGraph.png)
+
+
+- Assume that $X = (X_1,\dots,X_p)$ is a random, $p\times 1$-vector $X\sim\text{Gaussian}(\mu, \Sigma)$, where $\mu$ is $p\times 1$ and $\Sigma$ is a $p\times p$ covariance matrix
+
+
+- Let $\Omega = \Sigma^{-1}$
+
+
+- We can show that $$X_j \perp X_k | \{X_1,\dots, X_p\}\backslash \{X_j, X_k\} \Leftrightarrow \Omega_{jk} = 0$$
+
+
+- The log-likelihood of the inverse covariance matrix is $$p(\Omega) = -\frac{p}{2} \log(2\pi) +\log \textrm{det} \Omega - \textrm{tr}\left(\hat \Sigma \Omega\right) $$ where $\hat \Sigma = \frac{1}{n} \sum_{i=1}^n (x_i-\hat\mu)(x_i-\hat\mu)^T$
+
+
+- Recall that the multivariate Gaussian distribution is
+$$\begin{align}
+p(x) 
+&= \left[(2\pi)^p \textrm{det }(\Sigma)\right]^{-1/2} \exp\left( -\frac{1}{2} (x-\mu)^T \Sigma^{-1} (x-\mu) \right) \\
+&= (2\pi)^{-p/2} \left[\textrm{det }(\Sigma^{-1})\right]^{1/2} \exp\left( -\frac{1}{2} \textrm{tr }\left((x-\mu)^T(x-\mu) \Sigma^{-1} \right) \right) \\
+\log p(x)
+&= -\frac{p}{2} \log(2\pi) +\frac{1}{2}\log\left[\textrm{det }(\Sigma^{-1})\right] -\frac{1}{2} \textrm{tr }\left(\hat\Sigma \Sigma^{-1} \right) \\
+&= -\frac{p}{2} \log(2\pi) +\frac{1}{2}\log\left[\textrm{det }(\Omega)\right] -\frac{1}{2} \textrm{tr }\left(\hat\Sigma \Omega \right)
+\end{align}$$
+
+
+- Using a Lasso penalty on the likelihood, we the following optimization problem
+$$\hat \Omega = \arg\max_{\Omega} \left[ \log \textrm{det } \Omega - \textrm{tr}\left(\hat \Sigma \Omega\right) -\lambda \|\Omega\|_1\right]$$
+where $\|\Omega\|_1 =\sum_{j,k} |\Omega_{jk}|$
+
+
+- The corresponding conditional independence graph will be constructed from $\hat\Omega$ where variables (nodes) $j$ and $k$ are connected if $\Omega_{jk} \neq 0$
+
+
+- The code below is for running glasso the data may be too large for it
+
+
+```{r}
+#library(glasso)
+#glasso(cov(shipp$x), rho=0.5, nobs=dim(shipp$x)[1])
+```
