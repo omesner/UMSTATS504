@@ -1365,3 +1365,49 @@ where $\|\Omega\|_1 =\sum_{j,k} |\Omega_{jk}|$
 #library(glasso)
 #glasso(cov(shipp$x), rho=0.5, nobs=dim(shipp$x)[1])
 ```
+
+### Questions
+
+- What is the distribution of $p$-values under the null hypothesis? (type an answer)
+
+$$\\[0.5in]$$
+
+- When running many hypothesis tests, if $p$-values are not adjusted,
+  - A. each test meets the nominal significance level
+  - B. each test has a greater chance of being significant
+  - C. each test has a smaller chance of being significant
+  - D. Not sure
+
+$$\\[0.5in]$$
+
+- Which methods provide individual test results? (choose all that apply)
+  - A. Bonferroni
+  - B. Simes
+  - C. Fisher combination
+  - D. Kolmogorov-Smirnov
+  - E. Benjamini-Hochberg
+
+$$\\[0.5in]$$
+
+- What is a false discovery rate?
+  - A. The ratio of false positives to number of tests
+  - B. The probability that there are any false postives
+  - C. The expected ratio of false positives to number of tests
+  - D. The ratio of null results to number of tests
+
+$$\\[0.5in]$$
+
+- Multiple hypothesis testing with Benjamini-Hochberg should give fewer significant results than nonzero parameter estimates with Lasso
+  - A. True
+  - B. False
+
+$$\\[0.5in]$$
+
+- With Lasso, the parameter estimates (select all that apply)
+  - Give the average (additive or multiplicative) increase/decrease in outcome
+  - Indicate statistical significance when nonzero
+  - Give magnitudes of association in comparison to other variables
+  - Can be used for prediction
+
+
+
