@@ -1,7 +1,7 @@
 ---
 title: Survival Analysis, Algorithmic Fairness, and COMPAS Recidivism Algorithm Case
   Study
-author: "Octavio Mesner"
+
 output:
   html_document:
     keep_md: yes
@@ -13,19 +13,9 @@ header-includes:
 ---
 
 
-## Consulting Skills Focus
-
-- In real life consulting, the client will frequently understand the data and surrounding research better than the data scientist/statistician.
 
 
-- Analysis should center around a well-defined research question that drive the analysis and the data should be able to provide insight on the question of interest.
-- Human bias and data analysis: We all have bias.  This can influence data analysis.  A data analyst, we should do our best to objectively present the data.  When necessary to make assumptions, state them explicitly.  
-- Publication Bias example: Researchers frequently want "positive results."  Usually this means significant p-values.  Variable selection is a simple way to change p-values, p-hacking.  It's common to need to change variables in a model be it should be done a principled way.
-- Question: Have you heard of field of [algorithmic fairness](https://en.wikipedia.org/wiki/Fairness_(machine_learning))?
-  - a) yes
-  - b) no
-
-## Case Study Background
+## Background
 
 - US has more inmates, proportional to population size, than any other country.   While Black Americans make up 13% of the total US population, they account for 40% of incarcerated population in the US.
 ![incarceration world map](./Prisoners_world_map_png2.png)
@@ -39,7 +29,13 @@ Image from [Wikipedia](https://en.wikipedia.org/wiki/Incarceration_in_the_United
 - In 2014, then U.S. Attorney General Eric Holder warned that the risk scores might be injecting bias into the courts. He called for the U.S. Sentencing Commission to study their use. “Although these measures were crafted with the best of intentions, I am concerned that they inadvertently undermine our efforts to ensure individualized and equal justice,” he said, adding, “they may exacerbate unwarranted and unjust disparities that are already far too common in our criminal justice system and in our society.”
 - The [questionnaire](https://www.documentcloud.org/documents/2702103-Sample-Risk-Assessment-COMPAS-CORE.html) for determining COMPAS does not directly ask for race, but some people question inherent racial bias in the algorithm.
 - The COMPAS algorithm is proprietary and not available.
-- More information in a [2016 ProPublica article](https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing).
+- More information in a [2016 ProPublica article on machine bias](https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing).
+
+![](https://static.propublica.org/projects/algorithmic-bias/assets/img/generated/methodology-risk-of-recidivism-scores-by-race-900*363-482d1c.png)
+
+- Question: Have you heard of field of [algorithmic fairness](https://en.wikipedia.org/wiki/Fairness_(machine_learning))?
+  - a) yes
+  - b) no
 
 
 ## Data
@@ -392,7 +388,14 @@ tapply(df$decile_score, df$race, mean)
 Is this the best way to present this information?
 
 ## How to model algorithmic bias?
-- What does bias mean here?
+
+Question: Which are evidence of algorithmic bias? (select all that apply)
+
+- a. Mean scores are higher in some groups than others
+- b. Scores differ by group for individuals with the same recidivism risk
+- c. In a regression modeling recidivism including score as a covariate, other demographic covariates are significant
+
+$$\\[1in]$$
 
 
 - Would COMPAS give someone a greater score solely due to being Black or some other demographic, without changing anything else?
@@ -423,8 +426,11 @@ Is this the best way to present this information?
 
 ### Bayesian Network 1:
 
-<!--html_preserve--><div id="htmlwidget-22a77a35ee02cad4df22" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-22a77a35ee02cad4df22">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+
+```{=html}
+<div id="htmlwidget-2543307f11ad5a442304" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-2543307f11ad5a442304">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+```
 
 Mental Model: Think of a dataset where $A,B,C$ are collected
 
@@ -438,6 +444,8 @@ Question: What would a regression model of `C ~ A + B` yield?
 - b) Only $A$ should be statistically significant
 - c) Only $B$ should be statistically significant
 - d) Neither $A$ nor $B$ should be statistically significant
+
+$$\\[1in]$$
 
 
 ```r
@@ -475,6 +483,8 @@ Question: What about this regression model: `C ~ A`?
 
 - a) $A$ should be statistically significant
 - b) $A$ should not be statistically significant
+
+$$\\[1in]$$
 
 
 ```r
@@ -514,9 +524,14 @@ Question: Does this coefficient and intercept estimate make sense?
 - a) yes
 - b) nope
 
+$$\\[1in]$$
+
 ### Bayesian Network 2:
-<!--html_preserve--><div id="htmlwidget-46528befb67007d4fd39" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-46528befb67007d4fd39">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+
+```{=html}
+<div id="htmlwidget-f4318fd811a560a121b1" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-f4318fd811a560a121b1">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+```
 
 Mental Model:
 
@@ -530,6 +545,8 @@ Question: What would a regression model of `C ~ A + B` yield?
 - b) Only $A$ should be statistically significant
 - c) Only $B$ should be statistically significant
 - d) Neither $A$ nor $B$ should be statistically significant
+
+$$\\[1in]$$
 
 
 ```r
@@ -568,9 +585,14 @@ Question: What about this regression model: `C ~ A`?
 - a) $A$ should be statistically significant
 - b) $A$ should not be statistically significant
 
+$$\\[1in]$$
+
 ### Bayesian Network 3:
-<!--html_preserve--><div id="htmlwidget-219de2957ec7f0af477e" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-219de2957ec7f0af477e">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+
+```{=html}
+<div id="htmlwidget-e89c51d090da19a6f527" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-e89c51d090da19a6f527">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+```
 
 Mental Model:
 
@@ -584,6 +606,8 @@ Question: What would a regression model of `C ~ A + B` yield?
 - b) Only $A$ should be statistically significant
 - c) Only $B$ should be statistically significant
 - d) Neither $A$ nor $B$ should be statistically significant
+
+$$\\[1in]$$
 
 
 ```r
@@ -619,8 +643,11 @@ summary(lm(C~A+B))
 
 ### Bayesian Network 3 (again) with `A` as the outcome:
 
-<!--html_preserve--><div id="htmlwidget-86d3f32aede2bbed2497" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-86d3f32aede2bbed2497">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+
+```{=html}
+<div id="htmlwidget-8f62d1af1cc171bd1366" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-8f62d1af1cc171bd1366">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+```
 
 Question: What would a regression model of `A ~ B + C` yield?
 
@@ -628,6 +655,8 @@ Question: What would a regression model of `A ~ B + C` yield?
 - b) Only $B$ should be statistically significant
 - c) Only $C$ should be statistically significant
 - d) Neither $B$ nor $C$ should be statistically significant
+
+$$\\[1in]$$
 
 
 ```r
@@ -660,6 +689,8 @@ Question: What would a regression model of `A ~ B` yield?
 
 - a) $B$ should be statistically significant
 - b) $B$ should not be statistically significant
+
+$$\\[1in]$$
 
 
 ```r
@@ -708,8 +739,11 @@ summary(lm(A~B))
 - $A$ and $B$ are independent; that is, knowledge of $B$ give no information on the value of $A$. But, additional knowledge of $C$ does give information about the value of $A$.
 
 **Bayesian Network 4**
-<!--html_preserve--><div id="htmlwidget-6ff22edcc93c29033c57" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-6ff22edcc93c29033c57">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+
+```{=html}
+<div id="htmlwidget-b2c12186c9c64320e380" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-b2c12186c9c64320e380">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+```
 
 Mental Model:
 
@@ -723,6 +757,8 @@ Question: What would a regression model of `C ~ A + B` yield?
 - b) Only $A$ should be statistically significant
 - c) Only $B$ should be statistically significant
 - d) Neither $A$ nor $B$ should be statistically significant
+
+$$\\[1in]$$
 
 
 ```r
@@ -761,6 +797,8 @@ Question: What about this regression model: `C ~ A`?
 - a) $A$ should be statistically significant
 - b) $A$ should not be statistically significant
 
+$$\\[1in]$$
+
 
 ```r
 summary(lm(C~A))
@@ -793,6 +831,8 @@ Question: What about this regression model: `B ~ A + C`?
 - b) Only $A$ should be statistically significant
 - c) Only $C$ should be statistically significant
 - d) Neither $A$ nor $C$ should be statistically significant
+
+$$\\[1in]$$
 
 
 ```r
@@ -829,17 +869,13 @@ summary(lm(B~A+C))
 
 - One way to quantify racial bias in COMPAS would be to isolate the link between race and COMPAS that is not associated with recidivism.  But, it is not clear how to untangle this from potential collider bias.
 
-
-```dot
+```{engine="dot", out.width = '40%'}
 digraph {
   Race -> COMPAS [ label = "?"];
   COMPAS -> Recidivism [ label = "?"]; 
   Race -> Recidivism [ label = "?"]
   }
 ```
-
-
-<img src="survival_files/figure-html/unnamed-chunk-13-1.png" width="40%" />
 
 - If we used `decile_score ~ is_recid + race` as a model to quantify bias, it seems very likely that there will be collider bias
 
