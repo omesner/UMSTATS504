@@ -428,8 +428,8 @@ $$\\[1in]$$
 
 
 ```{=html}
-<div id="htmlwidget-2543307f11ad5a442304" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-2543307f11ad5a442304">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-83b7ba57a3a13d066a82" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-83b7ba57a3a13d066a82">{"x":{"diagram":"digraph flowchart {A -> B -> C [constraint=false]}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 ```
 
 Mental Model: Think of a dataset where $A,B,C$ are collected
@@ -529,8 +529,8 @@ $$\\[1in]$$
 ### Bayesian Network 2:
 
 ```{=html}
-<div id="htmlwidget-f4318fd811a560a121b1" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-f4318fd811a560a121b1">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-eb88631fc2959fde40ed" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-eb88631fc2959fde40ed">{"x":{"diagram":"digraph flowchart {A -> B; A -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 ```
 
 Mental Model:
@@ -590,8 +590,8 @@ $$\\[1in]$$
 ### Bayesian Network 3:
 
 ```{=html}
-<div id="htmlwidget-e89c51d090da19a6f527" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-e89c51d090da19a6f527">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-5b18d030e1e7b80ec6b2" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-5b18d030e1e7b80ec6b2">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 ```
 
 Mental Model:
@@ -645,8 +645,8 @@ summary(lm(C~A+B))
 
 
 ```{=html}
-<div id="htmlwidget-8f62d1af1cc171bd1366" style="width:40%;height:40%;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-8f62d1af1cc171bd1366">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-0f93292700956bdb94fd" style="width:40%;height:40%;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-0f93292700956bdb94fd">{"x":{"diagram":"digraph flowchart {A -> C; B -> C;}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 ```
 
 Question: What would a regression model of `A ~ B + C` yield?
@@ -741,8 +741,8 @@ summary(lm(A~B))
 **Bayesian Network 4**
 
 ```{=html}
-<div id="htmlwidget-b2c12186c9c64320e380" style="width:40%;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-b2c12186c9c64320e380">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-3cc2388102317666c2eb" style="width:40%;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-3cc2388102317666c2eb">{"x":{"diagram":"digraph flowchart {A -> C; B -> C; A -> B}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 ```
 
 Mental Model:
@@ -869,13 +869,16 @@ summary(lm(B~A+C))
 
 - One way to quantify racial bias in COMPAS would be to isolate the link between race and COMPAS that is not associated with recidivism.  But, it is not clear how to untangle this from potential collider bias.
 
-```{engine="dot", out.width = '40%'}
+
+```dot
 digraph {
   Race -> COMPAS [ label = "?"];
   COMPAS -> Recidivism [ label = "?"]; 
-  Race -> Recidivism [ label = "?"]
+  Race -> Recidivism [ label = "?"];
   }
 ```
+
+![](./compasCause.png)
 
 - If we used `decile_score ~ is_recid + race` as a model to quantify bias, it seems very likely that there will be collider bias
 

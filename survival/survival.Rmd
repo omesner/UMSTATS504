@@ -396,13 +396,15 @@ summary(lm(B~A+C))
 
 - One way to quantify racial bias in COMPAS would be to isolate the link between race and COMPAS that is not associated with recidivism.  But, it is not clear how to untangle this from potential collider bias.
 
-```{engine="dot", out.width = '40%'}
+```{dot, out.width = '40%', eval=FALSE}
 digraph {
   Race -> COMPAS [ label = "?"];
   COMPAS -> Recidivism [ label = "?"]; 
-  Race -> Recidivism [ label = "?"]
+  Race -> Recidivism [ label = "?"];
   }
 ```
+
+![](./compasCause.png)
 
 - If we used `decile_score ~ is_recid + race` as a model to quantify bias, it seems very likely that there will be collider bias
 
